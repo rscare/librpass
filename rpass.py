@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 
 def DecryptPassFile(passfile = None):
     if passfile == None:
