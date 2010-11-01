@@ -11,10 +11,15 @@ def DecryptPassFile(passfile = None):
 
     return str(proc.communicate()[0], encoding="utf-8")
 
-def EncryptPassFile(contents, passfile):
+def EncryptPassFile(contents, passfile = None):
+    if passfile == None:
+        from os.path import expanduser,join
+        passfile = join(expanduser('~'),".passwords.gpg")
+
+    from os.path import exists
     from subprocess import Popen,PIPE
     textproc = Popen(['echo', contents], shell=False, stdout=PIPE)
-    encproc = Popen(['gpg', '--output', passfile, '--encrypt'], shell=False, stdin=textproc.stdout)
+    encproc = Popen(['gpg', '--yes', '--output', passfile, '--encrypt'], shell=False, stdin=textproc.stdout)
 
 def ParsePassFile(contents = None):
     if contents == None: contents = DecryptPassFile()
