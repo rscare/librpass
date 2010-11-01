@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python
 
 def DecryptPassFile(passfile = None):
     if passfile == None:
@@ -9,7 +9,7 @@ def DecryptPassFile(passfile = None):
     proc = Popen(['gpg', '--quiet', '--no-tty', '--output', '-', '--decrypt', passfile],
             stdout = PIPE)
 
-    return proc.communicate()[0]
+    return str(proc.communicate()[0], encoding="utf-8")
 
 def EncryptPassFile(contents, passfile):
     from subprocess import Popen,PIPE
@@ -47,7 +47,7 @@ def GetAccountInfo(account, pinfo = None):
 
     return accountdict
 
-def PrintAccountInfo(acinfo = None, account = '.', ppass = False):
+def PrintAccountInfo(acinfo = None, account = '.', pfull = False, ppass = False):
     fgnescape = '\x1b[0;38;5;{0}m'
     bgnescape = '\x1b[0;48;5;{0}m'
     fgbescape = '\x1b[1;38;5;{0}m'
@@ -59,21 +59,22 @@ def PrintAccountInfo(acinfo = None, account = '.', ppass = False):
     pass_color = fgnescape.format(9)
 
     for ac in sorted(acinfo.keys()):
-        if acinfo[ac].has_key('user'):
-            print ac_color + ac + " - {0}{1}".format(user_color,acinfo[ac]['user'])
-        else: print ac_color + ac
-        if acinfo[ac].has_key('pass') and ppass:
-            print "\t{0}{1}".format(pass_color,acinfo[ac]['pass'])
-        for (k, v) in acinfo[ac].items():
-            if k not in ['user', 'pass']:
-                print "\t{0}: {1}".format(k, v)
+        if 'user' in acinfo[ac]:
+            print(ac_color + ac + " - {0}{1}".format(user_color,acinfo[ac]['user']))
+        else: print(ac_color + ac)
+        if ppass and ('pass' in acinfo[ac]):
+            print("\t{0}{1}".format(pass_color,acinfo[ac]['pass']))
+        if pfull:
+            for (k, v) in acinfo[ac].items():
+                if k not in ['user', 'pass']:
+                    print("\t{0}: {1}".format(k, v))
 
 def CopyPass(account = '.', acinfo = None):
     if acinfo == None: acinfo = GetAccountInfo(account)
     from subprocess import Popen,PIPE
 
     for ac in sorted(acinfo.keys()):
-        if acinfo[ac].has_key('pass'):
+        if 'pass' in acinfo[ac]:
             echoproc = Popen(['echo', acinfo[ac]['pass']], shell=False, stdout=PIPE)
             copyproc = Popen(['xclip'], shell=False, stdin=echoproc.stdout)
             return True
@@ -96,11 +97,13 @@ if __name__=="__main__":
     (options, args) = parser.parse_args()
 
     acinfo = {}
+    pfull = False
     if options.login:
         DecryptPassFile(); exit()
     if len(args) > 0:
         for arg in args: acinfo.update(GetAccountInfo(arg))
+        pfull = True
     else:
         acinfo = None
-    PrintAccountInfo(acinfo=acinfo, ppass=options.print_pass)
+    PrintAccountInfo(acinfo=acinfo, ppass=options.print_pass, pfull = pfull)
     if options.xclip: CopyPass(acinfo=acinfo)
