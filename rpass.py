@@ -117,6 +117,15 @@ def CreatePassFile(pinfo):
         contents += "\n"
     return contents.strip()
 
+def DeleteEntry(entry, pinfo = None):
+    if pinfo == None: pinfo = ParsePassFile()
+    if entry in pinfo: 
+        del(pinfo[entry])
+        EncryptPassFile(CreatePassFile(pinfo))
+        print("Deleted account {0}.".format(entry))
+    else:
+        print("Account {0} not found. Account must be entered exactly.".format(entry))
+
 if __name__=="__main__":
     from optparse import OptionParser
 
@@ -132,6 +141,8 @@ if __name__=="__main__":
             help="Just login, don't show anything.")
     parser.add_option("-a", "--add-entry", dest="new_entry",
             action="store_true", default=False)
+    parser.add_option("-d", "--delete-entry", dest="delete_entry",
+            action = "store")
 
     (options, args) = parser.parse_args()
 
@@ -143,6 +154,9 @@ if __name__=="__main__":
 
     if options.new_entry:
         AddEntry(); exit()
+
+    if options.delete_entry:
+        DeleteEntry(options.delete_entry); exit()
 
     if len(args) > 0:
         for arg in args: acinfo.update(GetAccountInfo(arg))
