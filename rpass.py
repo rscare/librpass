@@ -85,6 +85,25 @@ def CopyPass(account = '.', acinfo = None):
             return True
     return False
 
+def AddEntry(new_entry = None, pinfo = None):
+    if pinfo == None: pinfo = ParsePassFile()
+    acname = input("Account name: ")
+    pinfo[acname] = {}
+    print("Please enter field followed by value - blank field cancels.")
+    field = input("Field: ")
+    while(field):
+        if field in ["username", "u"]: field = "user"
+        if field in ["password", "p", "pass"]:
+            from getpass import getpass as gp
+            field = "pass"
+            pinfo[acname][field] = gp("{0}: ".format(field))
+        else:
+            pinfo[acname][field] = input("{0}: ".format(field))
+        field = input("Field: ")
+
+    EncryptPassFile(CreatePassFile(pinfo))
+    print("Account {0} added.".format(acname))
+
 def CreatePassFile(pinfo):
     contents = ""
     ftemplate = "    {0} = {1}\n"
@@ -111,17 +130,25 @@ if __name__=="__main__":
     parser.add_option("-l", "--login", dest="login",
             action="store_true", default=False,
             help="Just login, don't show anything.")
+    parser.add_option("-a", "--add-entry", dest="new_entry",
+            action="store_true", default=False)
 
     (options, args) = parser.parse_args()
 
     acinfo = {}
     pfull = False
+
     if options.login:
         DecryptPassFile(); exit()
+
+    if options.new_entry:
+        AddEntry(); exit()
+
     if len(args) > 0:
         for arg in args: acinfo.update(GetAccountInfo(arg))
         pfull = True
     else:
         acinfo = None
+
     PrintAccountInfo(acinfo=acinfo, ppass=options.print_pass, pfull = pfull)
     if options.xclip: CopyPass(acinfo=acinfo)
