@@ -2,8 +2,8 @@
 
 def DecryptPassFile(passfile = None):
     if passfile == None:
-        from os.path import expanduser
-        passfile = expanduser('~/.passwords.gpg')
+        from os.path import expanduser,join
+        passfile = join(expanduser('~'),".passwords.gpg")
 
     from subprocess import Popen,PIPE
     proc = Popen(['gpg', '--quiet', '--no-tty', '--output', '-', '--decrypt', passfile],
