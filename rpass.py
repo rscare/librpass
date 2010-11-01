@@ -85,6 +85,19 @@ def CopyPass(account = '.', acinfo = None):
             return True
     return False
 
+def CreatePassFile(pinfo):
+    contents = ""
+    ftemplate = "    {0} = {1}\n"
+    sorted_accounts = sorted(pinfo.keys())
+    for key in sorted_accounts:
+        contents += "[{0}]\n".format(key)
+        if "user" in pinfo[key]: contents += ftemplate.format("user", pinfo[key]["user"])
+        if "pass" in pinfo[key]: contents += ftemplate.format("pass", pinfo[key]["pass"])
+        for (field, value) in pinfo[key].items():
+            if field not in ["user", "pass"]: contents += ftemplate.format(field, value)
+        contents += "\n"
+    return contents.strip()
+
 if __name__=="__main__":
     from optparse import OptionParser
 
