@@ -1,10 +1,16 @@
 #!/usr/bin/python
 
-def DecryptPassFile(passfile = None):
+def DecryptPassFile(passfile = None, adding = False):
     if passfile == None:
         from os.path import expanduser,join
         passfile = join(expanduser('~'),".passwords.gpg")
 
+    from os.path import isfile
+    if not(isfile(passfile)):
+        if not(adding):
+            print("No account information saved! No passfile found! Add an account with rpass -a."); exit()
+        else:
+            return ""
     from subprocess import Popen,PIPE
     proc = Popen(['gpg', '--quiet', '--no-tty', '--output', '-', '--decrypt', passfile],
             stdout = PIPE)
@@ -21,8 +27,8 @@ def EncryptPassFile(contents, passfile = None):
     textproc = Popen(['echo', contents], shell=False, stdout=PIPE)
     encproc = Popen(['gpg', '--yes', '--output', passfile, '--encrypt'], shell=False, stdin=textproc.stdout)
 
-def ParsePassFile(contents = None):
-    if contents == None: contents = DecryptPassFile()
+def ParsePassFile(contents = None, adding = False):
+    if contents == None: contents = DecryptPassFile(adding = adding)
 
     import re
     parray = [s.strip() for s in contents.split('\n') if not(re.match(r'^\s*$', s))]
@@ -86,7 +92,7 @@ def CopyPass(account = '.', acinfo = None):
     return False
 
 def AddEntry(new_entry = None, pinfo = None):
-    if pinfo == None: pinfo = ParsePassFile()
+    if pinfo == None: pinfo = ParsePassFile(adding = True)
     acname = input("Account name: ")
     pinfo[acname] = {}
     print("Please enter field followed by value - blank field cancels.")
