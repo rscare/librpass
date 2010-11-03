@@ -135,7 +135,7 @@ def DeleteEntry(entry, pinfo = None, passfile = None):
         EncryptPassFile(CreatePassFile(pinfo))
         print("Deleted account {0}.".format(entry))
     else:
-        print("Account {0} not found. Account must be entered exactly.".format(entry))
+        raise NonexistentEntry
 
 if __name__=="__main__":
     from optparse import OptionParser
