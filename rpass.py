@@ -27,8 +27,8 @@ def EncryptPassFile(contents, passfile = None):
     textproc = Popen(['echo', contents], shell=False, stdout=PIPE)
     encproc = Popen(['gpg', '--yes', '--output', passfile, '--encrypt'], shell=False, stdin=textproc.stdout).wait()
 
-def ParsePassFile(contents = None, adding = False):
-    if contents == None: contents = DecryptPassFile(adding = adding)
+def ParsePassFile(contents = None, passfile = None):
+    if contents == None: contents = DecryptPassFile(passfile = passfile)
 
     import re
     parray = [s.strip() for s in contents.split('\n') if not(re.match(r'^\s*$', s))]
@@ -123,8 +123,8 @@ def CreatePassFile(pinfo):
         contents += "\n"
     return contents.strip()
 
-def DeleteEntry(entry, pinfo = None):
-    if pinfo == None: pinfo = ParsePassFile()
+def DeleteEntry(entry, pinfo = None, passfile = None):
+    if pinfo == None: pinfo = ParsePassFile(passfile = passfile)
     if entry in pinfo: 
         del(pinfo[entry])
         EncryptPassFile(CreatePassFile(pinfo))
