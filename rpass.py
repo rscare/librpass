@@ -91,24 +91,29 @@ def CopyPass(account = '.', acinfo = None):
             return True
     return False
 
-def AddEntry(new_entry = None, pinfo = None):
-    if pinfo == None: pinfo = ParsePassFile(adding = True)
-    acname = input("Account name: ")
-    pinfo[acname] = {}
-    print("Please enter field followed by value - blank field cancels.")
-    field = input("Field: ")
-    while(field):
-        if field in ["username", "u"]: field = "user"
-        if field in ["password", "p", "pass"]:
-            from getpass import getpass as gp
-            field = "pass"
-            pinfo[acname][field] = gp("{0}: ".format(field))
-        else:
-            pinfo[acname][field] = input("{0}: ".format(field))
+def AddEntry(new_entry = None, pinfo = None, passfile = None):
+    if pinfo == None: pinfo = ParsePassFile(passfile = passfile)
+    if new_entry == None:
+        acname = input("Account name: ")
+        if (acname) in pinfo.keys(): raise ExistingEntry
+        pinfo[acname] = {}
+        print("Please enter field followed by value - blank field cancels.")
         field = input("Field: ")
+        while(field):
+            if field in ["username", "u"]: field = "user"
+            if field in ["password", "p", "pass"]:
+                from getpass import getpass as gp
+                field = "pass"
+                pinfo[acname][field] = gp("{0}: ".format(field))
+            else:
+                pinfo[acname][field] = input("{0}: ".format(field))
+            field = input("Field: ")
+    else:
+        acname = new_entry['acname']
+        if acname in pinfo.keys(): raise ExistingEntry
+        pinfo[acname] = {key:value for (key, value) in new_entry.items() if key != 'acname'}
 
     EncryptPassFile(CreatePassFile(pinfo))
-    print("Account {0} added.".format(acname))
 
 def CreatePassFile(pinfo):
     contents = ""
