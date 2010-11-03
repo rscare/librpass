@@ -1,5 +1,17 @@
 #!/usr/bin/python
 
+class UnencryptedFile(IOError):
+    """Exception to take care of unencrypted files."""
+    pass
+
+class ExistingEntry(ValueError):
+    """Exception raised when attempting to overwrite an existing entry."""
+    pass
+
+class NonexistentEntry(ValueError):
+    """Exception raised when attempting to modify nonexistent entry."""
+    pass
+
 def DecryptPassFile(passfile = None):
      if passfile == None:
          from os.path import expanduser,join
