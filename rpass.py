@@ -1,21 +1,21 @@
 #!/usr/bin/python
 
-def DecryptPassFile(passfile = None, adding = False):
-    if passfile == None:
-        from os.path import expanduser,join
-        passfile = join(expanduser('~'),".passwords.gpg")
+def DecryptPassFile(passfile = None):
+     if passfile == None:
+         from os.path import expanduser,join
+         passfile = join(expanduser('~'),".passwords.gpg")
+ 
+     from os.path import isfile
+     if not isfile(passfile): raise IOError
 
-    from os.path import isfile
-    if not(isfile(passfile)):
-        if not(adding):
-            print("No account information saved! No passfile found! Add an account with rpass -a."); exit()
-        else:
-            return ""
-    from subprocess import Popen,PIPE
-    proc = Popen(['gpg', '--quiet', '--no-tty', '--output', '-', '--decrypt', passfile],
-            stdout = PIPE)
+     from subprocess import Popen,PIPE
+     proc = Popen(['gpg', '--quiet', '--no-tty', '--output', '-', '--decrypt', passfile],
+             stdout = PIPE, stderr = PIPE)
+ 
+     retstr, errstr = tuple(str(s, encoding = "utf-8") for s in proc.communicate())
+     if errstr.find("gpg: no valid OpenPGP data found.") != -1: raise UnencryptedFile
 
-    return str(proc.communicate()[0], encoding="utf-8")
+     return retstr.strip()
 
 def EncryptPassFile(contents, passfile = None):
     if passfile == None:
