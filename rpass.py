@@ -12,6 +12,10 @@ class NonexistentEntry(ValueError):
     """Exception raised when attempting to modify nonexistent entry."""
     pass
 
+class InvalidEncryptionKey(ValueError):
+    """Exception raised when key is nonexistent or incorrect."""
+    pass
+
 def DecryptPassFile(passfile = None):
      if passfile == None:
          from os.path import expanduser,join
@@ -26,6 +30,7 @@ def DecryptPassFile(passfile = None):
  
      retstr, errstr = tuple(str(s, encoding = "utf-8") for s in proc.communicate())
      if errstr.find("gpg: no valid OpenPGP data found.") != -1: raise UnencryptedFile
+     elif errstr.find("gpg: decryption failed: secret key not available") != -1: raise InvalidEncryptionKey
 
      return retstr.strip()
 
