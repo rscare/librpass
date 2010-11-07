@@ -175,17 +175,28 @@ if __name__=="__main__":
     if options.login:
         DecryptPassFile(); exit()
 
-    if options.new_entry:
-        AddEntry(); exit()
+    elif options.new_entry:
+        try:
+            AddEntry()
+        except IOError:
+            response = input("No password file found. Shall I create one? [Y/n] ")
+            if response == '' or not(response.lower()[0] == 'n'):
+                FILE = open('.passwords.gpg', 'w'); FILE.close()
+                AddEntry()
+        exit()
 
-    if options.delete_entry:
+    elif options.delete_entry:
         DeleteEntry(options.delete_entry); exit()
 
-    if len(args) > 0:
-        for arg in args: acinfo.update(GetAccountInfo(arg))
-        pfull = True
     else:
-        acinfo = None
+        try:
+            if len(args) > 0:
+                for arg in args: acinfo.update(GetAccountInfo(arg))
+                pfull = True
+            else:
+                acinfo = None
 
-    PrintAccountInfo(acinfo=acinfo, ppass=options.print_pass, pfull = pfull)
-    if options.xclip: CopyPass(acinfo=acinfo)
+            PrintAccountInfo(acinfo=acinfo, ppass=options.print_pass, pfull = pfull)
+            if options.xclip: CopyPass(acinfo=acinfo)
+        except IOError:
+            print("No password file found...create it with 'rpass -a'")
