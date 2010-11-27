@@ -178,7 +178,11 @@ if __name__=="__main__":
     pfull = False
 
     if options.login:
-        DecryptPassFile(); exit()
+        try:
+            DecryptPassFile()
+            exit(0)
+        except InvalidEncryptionKey:
+            exit(1)
 
     elif options.new_entry:
         try:
