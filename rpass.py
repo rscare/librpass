@@ -86,13 +86,10 @@ def PrintAccountInfo(acinfo = None, account = '.', pfull = False, ppass = False,
     user_color = fgnescape.format(6)
     pass_color = fgnescape.format(9)
 
-    acinfokeys = None
     if keys:
-        acinfokeys = sorted([k for k in acinfo.keys() if (k in keys)])
-    else:
-        acinfokeys = sorted(acinfo.keys())
+        acinfokeys = keys
 
-    for ac in acinfokeys:
+    for ac in sorted(acinfo.keys()):
         if not(batch):
             if 'user' in acinfo[ac]:
                 print(ac_color + ac + " - {0}{1}".format(user_color,acinfo[ac]['user']))
@@ -103,7 +100,10 @@ def PrintAccountInfo(acinfo = None, account = '.', pfull = False, ppass = False,
                 for (k, v) in acinfo[ac].items():
                     if k not in ['user', 'pass']:
                         print("\t{0}: {1}".format(k, v))
-        else: print ac
+        else:
+            for (k, v) in acinfo[ac].items():
+                if not(acinfokeys) or (k in acinfokeys):
+                    print(v)
 
 def CopyPass(account = '.', acinfo = None):
     if acinfo == None: acinfo = GetAccountInfo(account)
