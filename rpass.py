@@ -158,6 +158,12 @@ if __name__=="__main__":
     from optparse import OptionParser
 
     parser = OptionParser()
+    parser.add_option("--print", dest="printing_mode",
+            action="store_true", default=False,
+            help="Option to print only selected information.")
+    parser.add_option("-u", "--users", dest="print_users",
+            action="store_true", default=False,
+            help="Option to print usernames.")
     parser.add_option("-p", "--passwords", dest="print_pass",
             action="store_true", default=False,
             help="Print passwords to stdout.")
@@ -183,6 +189,9 @@ if __name__=="__main__":
             exit(0)
         except InvalidEncryptionKey:
             exit(1)
+
+    elif options.printing_mode:
+        pass
 
     elif options.new_entry:
         try:
