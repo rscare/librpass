@@ -75,7 +75,7 @@ def GetAccountInfo(account, pinfo = None):
 
     return accountdict
 
-def PrintAccountInfo(acinfo = None, account = '.', pfull = False, ppass = False, keys = None):
+def PrintAccountInfo(acinfo = None, account = '.', pfull = False, ppass = False, keys = None, batch = False):
     fgnescape = '\x1b[0;38;5;{0}m'
     bgnescape = '\x1b[0;48;5;{0}m'
     fgbescape = '\x1b[1;38;5;{0}m'
@@ -93,15 +93,17 @@ def PrintAccountInfo(acinfo = None, account = '.', pfull = False, ppass = False,
         acinfokeys = sorted(acinfo.keys())
 
     for ac in acinfokeys:
-        if 'user' in acinfo[ac]:
-            print(ac_color + ac + " - {0}{1}".format(user_color,acinfo[ac]['user']))
-        else: print(ac_color + ac)
-        if ppass and ('pass' in acinfo[ac]):
-            print("\t{0}{1}".format(pass_color,acinfo[ac]['pass']))
-        if pfull:
-            for (k, v) in acinfo[ac].items():
-                if k not in ['user', 'pass']:
-                    print("\t{0}: {1}".format(k, v))
+        if not(batch):
+            if 'user' in acinfo[ac]:
+                print(ac_color + ac + " - {0}{1}".format(user_color,acinfo[ac]['user']))
+            else: print(ac_color + ac)
+            if ppass and ('pass' in acinfo[ac]):
+                print("\t{0}{1}".format(pass_color,acinfo[ac]['pass']))
+            if pfull:
+                for (k, v) in acinfo[ac].items():
+                    if k not in ['user', 'pass']:
+                        print("\t{0}: {1}".format(k, v))
+        else: print ac
 
 def CopyPass(account = '.', acinfo = None):
     if acinfo == None: acinfo = GetAccountInfo(account)
