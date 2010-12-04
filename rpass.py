@@ -166,6 +166,9 @@ if __name__=="__main__":
     from optparse import OptionParser
 
     parser = OptionParser()
+    parser.add_option("-b", "--batch", dest="batch_mode",
+            action="store_true", default=False,
+            help="Option to print in batch mode: no colors, no field labels, no formatting.")
     parser.add_option("--print", dest="printing_mode",
             action="store_true", default=False,
             help="Option to print only selected information.")
@@ -190,6 +193,7 @@ if __name__=="__main__":
 
     acinfo = {}
     pfull = False
+    keys = []
 
     if options.login:
         try:
@@ -197,9 +201,6 @@ if __name__=="__main__":
             exit(0)
         except InvalidEncryptionKey:
             exit(1)
-
-    elif options.printing_mode:
-        pass
 
     elif options.new_entry:
         try:
@@ -222,7 +223,11 @@ if __name__=="__main__":
             else:
                 acinfo = None
 
-            PrintAccountInfo(acinfo=acinfo, ppass=options.print_pass, pfull = pfull)
+            if options.printing_mode:
+                if options.print_users: keys.append("user")
+                if options.print_pass: keys.extend(["pass", "password"])
+
+            PrintAccountInfo(acinfo=acinfo, ppass=options.print_pass, pfull = pfull, keys = keys, batch = options.batch_mode)
             if options.xclip: CopyPass(acinfo=acinfo)
         except IOError:
             print("No password file found...create it with 'rpass -a'")
