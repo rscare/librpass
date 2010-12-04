@@ -75,7 +75,7 @@ def GetAccountInfo(account, pinfo = None):
 
     return accountdict
 
-def PrintAccountInfo(acinfo = None, account = '.', pfull = False, ppass = False):
+def PrintAccountInfo(acinfo = None, account = '.', pfull = False, ppass = False, keys = None):
     fgnescape = '\x1b[0;38;5;{0}m'
     bgnescape = '\x1b[0;48;5;{0}m'
     fgbescape = '\x1b[1;38;5;{0}m'
@@ -86,7 +86,13 @@ def PrintAccountInfo(acinfo = None, account = '.', pfull = False, ppass = False)
     user_color = fgnescape.format(6)
     pass_color = fgnescape.format(9)
 
-    for ac in sorted(acinfo.keys()):
+    acinfokeys = None
+    if keys:
+        acinfokeys = sorted([k for k in acinfo.keys() if (k in keys)])
+    else:
+        acinfokeys = sorted(acinfo.keys())
+
+    for ac in acinfokeys:
         if 'user' in acinfo[ac]:
             print(ac_color + ac + " - {0}{1}".format(user_color,acinfo[ac]['user']))
         else: print(ac_color + ac)
