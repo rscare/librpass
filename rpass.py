@@ -63,11 +63,15 @@ def ParsePassFile(contents = None, passfile = None):
 
     return pdict
 
-def GetAccountInfo(account, pinfo = None):
+def GetAccountInfo(account, pinfo = None, strict = False):
     if pinfo == None: pinfo = ParsePassFile()
 
     import re
-    accountpatt = re.compile(account, re.I)
+    accountpatt = ''
+    if strict:
+        accountpatt = re.compile("^{0}$".format(account))
+    else:
+        accountpatt = re.compile(account, re.I)
     accountdict = {}
 
     for ac in pinfo.keys():
@@ -80,7 +84,7 @@ def PrintAccountInfo(acinfo = None, account = '.', pfull = False, ppass = False,
     bgnescape = '\x1b[0;48;5;{0}m'
     fgbescape = '\x1b[1;38;5;{0}m'
 
-    if acinfo == None: acinfo = GetAccountInfo(account)
+    if acinfo == None: acinfo = GetAccountInfo(account, strict = batch)
 
     ac_color = fgbescape.format(7)
     user_color = fgnescape.format(6)
@@ -228,6 +232,6 @@ if __name__=="__main__":
                 if options.print_pass: keys.extend(["pass", "password"])
 
             PrintAccountInfo(acinfo=acinfo, ppass=options.print_pass, pfull = pfull, keys = keys, batch = options.batch_mode)
-            if options.xclip: CopyPass(acinfo=acinfo)
+            if not(options.batch_mode) and options.xclip: CopyPass(acinfo=acinfo)
         except IOError:
             print("No password file found...create it with 'rpass -a'")
