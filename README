@@ -2,6 +2,10 @@ GENERAL
 
 'rpass' is a module and related executable that are meant to make secure password management through the commandline accessible, convenient, and easy.
 
+GPG-AGENT
+
+While rpass will work fine if gpg-agent is not running, it really shines when gpg-agent is being used.
+
 USAGE
 
 NOTE: Passwords are never printed unless stated explicitly (see 'rpass -h')
