@@ -1,0 +1,16 @@
+GENERAL
+
+'rpass' is a module and related executable that are meant to make secure password management through the commandline accessible, convenient, and easy.
+
+USAGE
+
+The command 'rpass' on its own will list account names and corresponding fields.
+The command 'rpass' followed by any text will print any accounts that contain the text, case-insensitive (regular expressions allowed).
+The command 'rpass -a' brings up an interface to add accounts and information.
+See rpass -h for more information.
+
+After installation, the module can be imported with 'import rpass'.
+
+DEPENDENCIES
+
+The executable 'gpg' must be in your $PATH.
