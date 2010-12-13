@@ -42,7 +42,7 @@ def EncryptPassFile(contents, passfile = None):
     from os.path import exists
     from subprocess import Popen,PIPE
     textproc = Popen(['echo', contents], shell=False, stdout=PIPE)
-    encproc = Popen(['gpg', '--yes', '--output', passfile, '--encrypt'], shell=False, stdin=textproc.stdout).wait()
+    encproc = Popen(['gpg', '--default-recipient-self', '--yes', '--output', passfile, '--encrypt'], shell=False, stdin=textproc.stdout).wait()
 
 def ParsePassFile(contents = None, passfile = None):
     if contents == None: contents = DecryptPassFile(passfile = passfile)
