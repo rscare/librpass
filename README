@@ -4,13 +4,33 @@ GENERAL
 
 USAGE
 
-The command 'rpass' on its own will list account names and corresponding fields.
-The command 'rpass' followed by any text will print any accounts that contain the text, case-insensitive (regular expressions allowed).
+NOTE: Passwords are never printed unless stated explicitly (see 'rpass -h')
+SECURITY NOTE: It is highly recommended to have 'xclip' installed so that passwords never have to be written to stdout.
+
+The command 'rpass' on its own will list account names and corresponding fields in the following format:
+
+Account Name 1 - username1
+Account Name 2 - username2
+Account Name 3 <---------- There are no required fields in rpass apart from account name
+...
+
+The command 'rpass' followed by any text will print any accounts that contain the text in the account name, case-insensitive (regular expressions allowed) in the following format:
+
+Account Name 1 - username1
+Account Name 2 - username2
+    optional_field1: optional_value1
+Account Name 3
+...
+
+Additionally, the password of the first matching account will be copied to the X-clipboard if 'xclip' is in the user's $PATH.
+
 The command 'rpass -a' brings up an interface to add accounts and information.
 See rpass -h for more information.
 
-After installation, the module can be imported with 'import rpass'.
+After installation, the module can be imported with 'import rpass'. See the module source for more details.
 
 DEPENDENCIES
 
 The executable 'gpg' must be in your $PATH.
+
+In order for copying to the X-clipboard to work, 'xclip' must be in the user's $PATH.
