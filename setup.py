@@ -5,5 +5,6 @@ setup(name = 'rpass',
         description = 'GPG-based commandline password manager.',
         author = 'Yuri D. Lenskiy',
         author_email = 'yuri.lenskiy@gmail.com',
-        py_modules = ['rpass']
+        py_modules = ['rpass'],
+        scripts = ['rpass']
         )
