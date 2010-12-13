@@ -1,0 +1,72 @@
+#!/usr/bin/python
+
+if __name__=="__main__":
+    from optparse import OptionParser
+    from rpass import *
+
+    parser = OptionParser()
+    parser.add_option("-b", "--batch", dest="batch_mode",
+            action="store_true", default=False,
+            help="Option to print in batch mode: no colors, no field labels, no formatting.")
+    parser.add_option("--print", dest="printing_mode",
+            action="store_true", default=False,
+            help="Option to print only selected information.")
+    parser.add_option("-u", "--users", dest="print_users",
+            action="store_true", default=False,
+            help="Option to print usernames.")
+    parser.add_option("-p", "--passwords", dest="print_pass",
+            action="store_true", default=False,
+            help="Print passwords to stdout.")
+    parser.add_option("-c", "--no-copy", dest="xclip",
+            action="store_false", default=True,
+            help="Don't copy alphabetically first matching password to clipboard.")
+    parser.add_option("-l", "--login", dest="login",
+            action="store_true", default=False,
+            help="Just login, don't show anything.")
+    parser.add_option("-a", "--add-entry", dest="new_entry",
+            action="store_true", default=False)
+    parser.add_option("-d", "--delete-entry", dest="delete_entry",
+            action = "store")
+
+    (options, args) = parser.parse_args()
+
+    acinfo = {}
+    pfull = False
+    keys = []
+
+    if options.login:
+        try:
+            DecryptPassFile()
+            exit(0)
+        except InvalidEncryptionKey:
+            exit(1)
+
+    elif options.new_entry:
+        try:
+            AddEntry()
+        except IOError:
+            response = input("No password file found. Shall I create one? [Y/n] ")
+            if response == '' or not(response.lower()[0] == 'n'):
+                FILE = open('.passwords.gpg', 'w'); FILE.close()
+                AddEntry()
+        exit()
+
+    elif options.delete_entry:
+        DeleteEntry(options.delete_entry); exit()
+
+    else:
+        try:
+            if len(args) > 0:
+                for arg in args: acinfo.update(GetAccountInfo(arg))
+                pfull = True
+            else:
+                acinfo = None
+
+            if options.printing_mode:
+                if options.print_users: keys.append("user")
+                if options.print_pass: keys.extend(["pass", "password"])
+
+            PrintAccountInfo(acinfo=acinfo, ppass=options.print_pass, pfull = pfull, keys = keys, batch = options.batch_mode)
+            if not(options.batch_mode) and options.xclip: CopyPass(acinfo=acinfo)
+        except IOError:
+            print("No password file found...create it with 'rpass -a'")
