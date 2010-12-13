@@ -23,8 +23,10 @@ def DecryptPassFile(passfile = None):
      if not isfile(passfile): raise IOError
 
      from subprocess import Popen,PIPE
-     proc = Popen(['gpg', '--quiet', '--no-tty', '--output', '-', '--decrypt', passfile],
-             stdout = PIPE, stderr = PIPE)
+     proc = Popen(['ps', '-e'], stdout = PIPE, stderr = PIPE)
+     proclst = ['gpg', '--quiet', '--output', '-', '--decrypt', passfile]
+     if 'gpg-agent' in str(proc.communicate()[0], encoding = 'utf-8'): proclst.insert(1, '--no-tty')
+     proc = Popen(proclst, stdout = PIPE, stderr = PIPE)
  
      retstr, errstr = tuple(str(s, encoding = "utf-8") for s in proc.communicate())
      if errstr.find("gpg: no valid OpenPGP data found.") != -1: raise UnencryptedFile
