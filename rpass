@@ -57,10 +57,10 @@ if __name__=="__main__":
     else:
         try:
             if len(args) > 0:
-                for arg in args: acinfo.update(GetAccountInfo(arg))
+                for arg in args: acinfo.update(GetAccountInfo(arg, strict = options.batch_mode))
                 pfull = True
             else:
-                acinfo = None
+                acinfo = GetAccountInfo('.', strict = options.batch_mode)
 
             if options.printing_mode:
                 if options.print_users: keys.append("user")
