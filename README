@@ -1,10 +1,34 @@
+CONTENTS
+
+    GENERAL
+        Goals
+    GPG-AGENT
+    USAGE
+    DEPENDENCIES
+
 GENERAL
 
 'rpass' is a module and related executable that are meant to make secure password management through the commandline accessible, convenient, and easy.
 
+Goals:
+
+Simple user interface
+    - Automatic copying
+    - Intuitive, simple searching
+    - Powerful regular expression searching
+Transparent code
+    - Simple codebase allows bugs to surface quickly, adding to security
+Pluggable
+    - Batch mode for executable
+    - Importable python module for integration to other python programs
+Universal password solution
+    - Possible ONLY WITH GPG-AGENT
+
 GPG-AGENT
 
-While rpass will work fine if gpg-agent is not running, it really shines when gpg-agent is being used.
+While rpass will work fine if gpg-agent is not running, it really shines when
+gpg-agent is being used. Furthermore, in an X-based environment where it is
+being used as a plugin, practically speaking gpg-agent must be used.
 
 USAGE
 
@@ -13,6 +37,7 @@ SECURITY NOTE: It is highly recommended to have 'xclip' installed so that passwo
 
 The command 'rpass' on its own will list account names and corresponding fields in the following format:
 
+# rpass
 Account Name 1 - username1
 Account Name 2 - username2
 Account Name 3 <---------- There are no required fields in rpass apart from account name
@@ -20,10 +45,18 @@ Account Name 3 <---------- There are no required fields in rpass apart from acco
 
 The command 'rpass' followed by any text will print any accounts that contain the text in the account name, case-insensitive (regular expressions allowed) in the following format:
 
+Simple query:
+
+# rpass 1
 Account Name 1 - username1
-Account Name 2 - username2
-    optional_field1: optional_value1
+...
+
+Regular expressions:
+
+# rpass "name (1|3)$"
+Account Name 1 - username1
 Account Name 3
+    optional_field1: optional_value1
 ...
 
 Additionally, the password of the first matching account will be copied to the X-clipboard if 'xclip' is in the user's $PATH.
@@ -38,3 +71,5 @@ DEPENDENCIES
 The executable 'gpg' must be in your $PATH.
 
 In order for copying to the X-clipboard to work, 'xclip' must be in the user's $PATH.
+
+gpg-agent for tool to be used to full potential.
