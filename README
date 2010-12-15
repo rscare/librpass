@@ -1,15 +1,18 @@
+NOTE: If you have never used gpg before, read the SETUP section.
+
 CONTENTS
 
     GENERAL
         Goals
     GPG-AGENT
+    SETUP
     USAGE
     PLUGIN
     DEPENDENCIES
 
 GENERAL
 
-'rpass' is a module and related executable that are meant to make secure password management through the commandline accessible, convenient, and easy.
+'rpass' is a module and related executable that are meant to make secure password management through the commandline and almost all programs accessible, convenient, and easy.
 
 Goals:
 
@@ -23,16 +26,45 @@ Simple user interface
 Transparent code
     - Simple codebase allows bugs to surface quickly, adding to security
 Pluggable
-    - Batch mode for executable
     - Importable python module for integration to other python programs
+    - Batch mode for executable
 Universal password solution
     - Possible ONLY WITH GPG-AGENT
 
-GPG-AGENT
+GPG-AGENT -- DO THIS
 
 While rpass will work fine if gpg-agent is not running, it really shines when
 gpg-agent is being used. Furthermore, in an X-based environment where it is
 being used as a plugin, practically speaking gpg-agent must be used.
+
+All you need to do is run
+
+# eval $(gpg-agent --daemon --write-env-file)
+
+on login.
+
+SETUP
+
+If installing from source:
+
+# python setup.py install
+
+Gnupg (REQUIRED):
+
+If you do not yet have a key pair (i.e. if you have never used gpg before), run
+
+# gpg --gen-key 
+
+and follow the directions (make sure you pick an option for key
+type that is not sign-only). Pick a SECURE passphrase, this is your 'master' password.
+
+gpg-agent (HIGHLY RECOMMENDED):
+
+Run the command
+
+# eval $(gpg-agent --daemon --write-env-file)
+
+on login.
 
 USAGE
 
