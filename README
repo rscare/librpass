@@ -4,6 +4,7 @@ CONTENTS
         Goals
     GPG-AGENT
     USAGE
+    PLUGIN
     DEPENDENCIES
 
 GENERAL
@@ -12,6 +13,9 @@ GENERAL
 
 Goals:
 
+Secure
+    - Passwords are never written out in plaintext to harddrive under ANY conditions
+    - With 'xclip' installed, passwords never need to even be seen
 Simple user interface
     - Automatic copying
     - Intuitive, simple searching
@@ -65,6 +69,11 @@ The command 'rpass -a' brings up an interface to add accounts and information.
 See rpass -h for more information.
 
 After installation, the module can be imported with 'import rpass'. See the module source for more details.
+
+PLUGIN
+
+For any python program or program with support for python plugins, 'import rpass' will allow you to use all the functions of the main program.
+For other programs and scripts, 'rpass -b' results in usage that does exact matching, prints without color or other formatting commands, and allows selection of fields to print.
 
 DEPENDENCIES
 
