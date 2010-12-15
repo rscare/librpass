@@ -12,7 +12,9 @@ CONTENTS
 
 GENERAL
 
-'rpass' is a module and related executable that are meant to make secure password management through the commandline and almost all programs accessible, convenient, and easy.
+'rpass' is a module and related executable that are meant to make secure
+password management through the commandline and almost all programs accessible,
+convenient, and easy.
 
 Goals:
 
@@ -69,9 +71,11 @@ on login.
 USAGE
 
 NOTE: Passwords are never printed unless stated explicitly (see 'rpass -h')
-SECURITY NOTE: It is highly recommended to have 'xclip' installed so that passwords never have to be written to stdout.
+SECURITY NOTE: It is highly recommended to have 'xclip' installed so that
+passwords never have to be written to stdout.
 
-The command 'rpass' on its own will list account names and corresponding fields in the following format:
+The command 'rpass' on its own will list account names and corresponding fields
+in the following format:
 
 # rpass
 Account Name 1 - username1
@@ -79,7 +83,9 @@ Account Name 2 - username2
 Account Name 3 <---------- There are no required fields in rpass apart from account name
 ...
 
-The command 'rpass' followed by any text will print any accounts that contain the text in the account name, case-insensitive (regular expressions allowed) in the following format:
+The command 'rpass' followed by any text will print any accounts that contain
+the text in the account name, case-insensitive (regular expressions allowed) in
+the following format:
 
 Simple query:
 
@@ -95,7 +101,8 @@ Account Name 3
     optional_field1: optional_value1
 ...
 
-Additionally, the password of the first matching account will be copied to the X-clipboard if 'xclip' is in the user's $PATH.
+Additionally, the password of the first matching account will be copied to the
+X-clipboard if 'xclip' is in the user's $PATH.
 
 The command 'rpass -a' brings up an interface to add accounts and information.
 See rpass -h for more information.
@@ -104,8 +111,12 @@ After installation, the module can be imported with 'import rpass'. See the modu
 
 PLUGIN
 
-For any python program or program with support for python plugins, 'import rpass' will allow you to use all the functions of the main program.
-For other programs and scripts, 'rpass -b' results in usage that does exact matching, prints without color or other formatting commands, and allows selection of fields to print.
+For any python program or program with support for python plugins, 'import
+rpass' will allow you to use all the functions of the main program.
+
+For other programs and scripts, 'rpass -b' results in usage that does exact
+matching, prints without color or other formatting commands, and allows
+selection of fields to print.
 
 DEPENDENCIES
 
