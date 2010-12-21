@@ -3,6 +3,8 @@
 if __name__=="__main__":
     from optparse import OptionParser
     from rpass import *
+    from os.path import expanduser
+    from os.path import join as path_join
 
     parser = OptionParser()
     parser.add_option("-b", "--batch", dest="batch_mode",
@@ -47,7 +49,7 @@ if __name__=="__main__":
         except IOError:
             response = input("No password file found. Shall I create one? [Y/n] ")
             if response == '' or not(response.lower()[0] == 'n'):
-                FILE = open('.passwords.gpg', 'w'); FILE.close()
+                FILE = open(expanduser(path_join('~', '.passwords.gpg'), 'w')); FILE.close()
                 AddEntry()
         exit()
 
