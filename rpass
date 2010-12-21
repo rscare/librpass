@@ -9,17 +9,17 @@ if __name__=="__main__":
     parser = OptionParser()
     parser.add_option("-b", "--batch", dest="batch_mode",
             action="store_true", default=False,
-            help="Option to print in batch mode: no colors, no field labels, no formatting.")
-    parser.add_option("--print", dest="printing_mode",
+            help="Option to print in batch mode: no colors, no copying, no field labels, no formatting.")
+    parser.add_option("-p", "--print", dest="printing_mode",
             action="store_true", default=False,
             help="Option to print only selected information.")
     parser.add_option("-u", "--users", dest="print_users",
             action="store_true", default=False,
             help="Option to print usernames.")
-    parser.add_option("-p", "--passwords", dest="print_pass",
+    parser.add_option("--passwords", dest="print_pass",
             action="store_true", default=False,
             help="Print passwords to stdout.")
-    parser.add_option("-c", "--no-copy", dest="xclip",
+    parser.add_option("-n", "--no-copy", dest="xclip",
             action="store_false", default=True,
             help="Don't copy alphabetically first matching password to clipboard.")
     parser.add_option("-l", "--login", dest="login",
@@ -29,6 +29,8 @@ if __name__=="__main__":
             action="store_true", default=False)
     parser.add_option("-d", "--delete-entry", dest="delete_entry",
             action = "store")
+    parser.add_option("-k", "--keys", dest="print_keys",
+            action = "store", type = "string")
 
     (options, args) = parser.parse_args()
 
@@ -68,6 +70,7 @@ if __name__=="__main__":
             if options.printing_mode:
                 if options.print_users: keys.append("user")
                 if options.print_pass: keys.extend(["pass", "password"])
+                if options.print_keys: keys.extend(options.print_keys.split(','))
 
             PrintAccountInfo(acinfo=acinfo, ppass=options.print_pass, pfull = pfull, keys = keys, batch = options.batch_mode)
         except IOError:
