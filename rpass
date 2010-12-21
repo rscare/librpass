@@ -59,6 +59,7 @@ if __name__=="__main__":
             if len(args) > 0:
                 for arg in args: acinfo.update(GetAccountInfo(arg, strict = options.batch_mode))
                 pfull = True
+                if not(options.batch_mode) and options.xclip: CopyPass(acinfo=acinfo)
             else:
                 acinfo = GetAccountInfo('.', strict = options.batch_mode)
 
@@ -67,6 +68,5 @@ if __name__=="__main__":
                 if options.print_pass: keys.extend(["pass", "password"])
 
             PrintAccountInfo(acinfo=acinfo, ppass=options.print_pass, pfull = pfull, keys = keys, batch = options.batch_mode)
-            if not(options.batch_mode) and options.xclip: CopyPass(acinfo=acinfo)
         except IOError:
             print("No password file found...create it with 'rpass -a'")
