@@ -51,7 +51,7 @@ if __name__=="__main__":
         except IOError:
             response = input("No password file found. Shall I create one? [Y/n] ")
             if response == '' or not(response.lower()[0] == 'n'):
-                FILE = open(expanduser(path_join('~', '.passwords.gpg'), 'w')); FILE.close()
+                FILE = open(path_join(expanduser('~'), '.passwords.gpg'), 'w'); FILE.close()
                 AddEntry()
         exit()
 
