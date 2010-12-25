@@ -10,31 +10,25 @@ rpass - secure (i.e. encrypted), simple, command-line password manager
 SYNOPSIS
 --------
 
-'rpass' is a module and related executable that are meant to make secure
-password management through the commandline and almost all programs accessible,
-convenient, and easy.
+*rpass* -a
 
-Goals:
-~~~~~~
-* Secure
-    - Passwords are never written out in plaintext to harddrive under ANY conditions
-    - With 'xclip' installed, passwords never need to even be seen
-* Simple user interface
-    - Automatic copying
-    - Intuitive, simple searching
-    - Powerful regular expression searching
-* Transparent code
-    - Simple codebase allows bugs to surface quickly, adding to security
-* Pluggable
-    - Importable python module for integration to other python programs
-    - Batch mode for executable
-* Universal password solution
+*rpass* -d 'ACCOUNT NAME'
+
+*rpass* ['OPTIONS'] 'PATTERN'
+
+DESCRIPTION
+-----------
+
+*rpass* is a module and related executable that are meant to make secure
+password management through the commandline and almost all programs that use
+passwords accessible, convenient, and easy.
 
 DEPENDENCIES
 ------------
 
-* The executable 'gpg' must be in your $PATH.
-* In order for copying to the X-clipboard to work, 'xclip' must be in the user's $PATH.
+* The executable *gpg* must be in your $PATH.
+* In order for copying to the X-clipboard to work, *xclip* must be in the
+  user's $PATH.
 * gpg-agent for tool to be used to full potential.
 
 SETUP
@@ -46,6 +40,8 @@ WARNING: gpg-agent makes rpass useful
 
 WARNING: Program will not work in plugins if gpg-agent is not running
 
+WARNING: gpg-agent is highly recommended, and the rpass is truly useful only
+after enabling gpg-agent
 
 If installing from source:
 
@@ -63,23 +59,11 @@ If you do not yet have a key pair (i.e. if you have never used gpg before), run
 ----
 
 and follow the directions (make sure you pick an option for key
-type that is not sign-only). Pick a SECURE passphrase, this is your 'master' password.
+type that is not sign-only). Pick a SECURE passphrase, this is your "master"
+password.
 
 gpg-agent:
 ~~~~~~~~~~
-
-Run the command
-
-----
-# eval $(gpg-agent --daemon --write-env-file)
-----
-
-on login.
-
-GPG-AGENT
----------
-
-WARNING: This is highly recommended, and the rpass is truly useful only after enabling gpg-agent
 
 While rpass will work fine if gpg-agent is not running, it really shines when
 gpg-agent is being used. Furthermore, in an X-based environment where it is
@@ -96,12 +80,12 @@ on login.
 USAGE
 -----
 
-WARNING: It is highly recommended to have 'xclip' installed so that
+WARNING: It is highly recommended to have *xclip* installed so that
 passwords never have to be written to stdout.
 
-NOTE: Passwords are never printed unless stated explicitly (see 'rpass -h')
+NOTE: Passwords are never printed unless stated explicitly (see `rpass -h`)
 
-The command 'rpass' on its own will list account names and corresponding fields
+The command *rpass* on its own will list account names and corresponding fields
 in the following format:
 
 ----
@@ -112,7 +96,7 @@ Account Name 3 <---------- There are no required fields in rpass apart from acco
 ...
 ----
 
-The command 'rpass' followed by any text will print any accounts that contain
+The command *rpass* followed by any text will print any accounts that contain
 the text in the account name, case-insensitive (regular expressions allowed) in
 the following format:
 
@@ -135,21 +119,39 @@ Account Name 3
 ----
 
 Additionally, the password of the first matching account will be copied to the
-X-clipboard if 'xclip' is in the user's $PATH.
+X-clipboard if *xclip* is in the user's $PATH.
 
-The command 'rpass -a' brings up an interface to add accounts and information.
-See rpass -h for more information.
+The command *rpass -a* brings up an interface to add accounts and information.
+See `rpass -h` for more information.
 
-After installation, the module can be imported with 'import rpass'. See the module source for more details.
+After installation, the module can be imported with "import rpass". See the
+module source for more details.
 
 PLUGIN
 ------
 
-For any python program or program with support for python plugins, 'import
-rpass' will allow you to use all the functions of the main program.
+For any python program or program with support for python plugins, "import
+rpass" will allow you to use all the functions of the main program.
 
-For other programs and scripts, 'rpass -b' results in usage that does exact
+For other programs and scripts, `rpass -b` results in usage that does exact
 matching, prints without color or other formatting commands, and allows
 selection of fields to print.
+
+GOALS
+-----
+* Secure
+    - Passwords are never written out in plaintext to harddrive under ANY
+      conditions
+    - With *xclip* installed, passwords never need to even be seen
+* Simple user interface
+    - Automatic copying
+    - Intuitive, simple searching
+    - Powerful regular expression searching
+* Transparent code
+    - Simple codebase allows bugs to surface quickly, adding to security
+* Pluggable
+    - Importable python module for integration to other python programs
+    - Batch mode for executable
+* Universal password solution
 
 // vim:filetype=asciidoc:
