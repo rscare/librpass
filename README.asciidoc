@@ -49,8 +49,8 @@ If installing from source:
 
 Run rpass once to set up *gpg* (generate keys) if this has not been done already.
 
-gpg-agent:
-~~~~~~~~~~
+GPG-AGENT
+----------
 
 While rpass will work fine if gpg-agent is not running, it really shines when
 gpg-agent is being used. Furthermore, in an X-based environment where it is
