@@ -81,6 +81,9 @@ if __name__=="__main__":
         subprocess.call('gpg --gen-key'.split(' '))
         exit()
 
+    if not(IsRunning('gpg-agent')):
+        print("gpg-agent is not running. This is not recommended. Continuing anyway...")
+
     parser = OptionParser()
 
     parser.add_option("-b", "--batch", dest="batch_mode",
