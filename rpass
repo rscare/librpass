@@ -12,6 +12,6 @@ if [ -f ${HOME}/.gpg-agent-info ]; then
     export SSH_AGENT_PID
 fi
 
-rpass_py_interface
+rpass_py_interface "$@"
 
 # vim: filetype=sh :

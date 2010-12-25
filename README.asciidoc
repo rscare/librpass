@@ -29,17 +29,10 @@ DEPENDENCIES
 * The executable *gpg* must be in your $PATH.
 * In order for copying to the X-clipboard to work, *xclip* must be in the
   user's $PATH.
-* gpg-agent for tool to be used to full potential.
+* *gpg-agent* for tool to be used to full potential.
 
 SETUP
 -----
-
-WARNING: gpg-agent makes rpass useful
-
-WARNING: Program will not work in plugins if gpg-agent is not running
-
-WARNING: gpg-agent is highly recommended, and the rpass is truly useful only
-after enabling gpg-agent
 
 If installing from source:
 
@@ -48,21 +41,6 @@ If installing from source:
 ----
 
 Run rpass once to set up *gpg* (generate keys) if this has not been done already.
-
-GPG-AGENT
-----------
-
-While rpass will work fine if gpg-agent is not running, it really shines when
-gpg-agent is being used. Furthermore, in an X-based environment where it is
-being used as a plugin, practically speaking gpg-agent must be used.
-
-All you need to do is run
-
-----
-# eval $(gpg-agent --daemon --write-env-file)
-----
-
-anytime after or during user login.
 
 USAGE
 -----
@@ -117,12 +95,19 @@ module source for more details.
 PLUGIN
 ------
 
+WARNING: For rpass to be effective as a plugin, you need *gpg-agent*
+
 For any python program or program with support for python plugins, "import
 rpass" will allow you to use all the functions of the main program.
 
 For other programs and scripts, `rpass -b` results in usage that does exact
 matching, prints without color or other formatting commands, and allows
 selection of fields to print.
+
+SEE ALSO
+--------
+
+gpg-agent(1), gpg(1)
 
 GOALS
 -----
