@@ -62,7 +62,7 @@ All you need to do is run
 # eval $(gpg-agent --daemon --write-env-file)
 ----
 
-on login.
+anytime after or during user login.
 
 USAGE
 -----
