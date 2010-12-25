@@ -75,57 +75,11 @@ must be in the user\(cqs $PATH\&.
 .sp -1
 .IP \(bu 2.3
 .\}
-gpg\-agent for tool to be used to full potential\&.
+
+\fBgpg\-agent\fR
+for tool to be used to full potential\&.
 .RE
 .SH "SETUP"
-.if n \{\
-.sp
-.\}
-.RS 4
-.it 1 an-trap
-.nr an-no-space-flag 1
-.nr an-break-flag 1
-.br
-.ps +1
-\fBWarning\fR
-.ps -1
-.br
-.sp
-gpg\-agent makes rpass useful
-.sp .5v
-.RE
-.if n \{\
-.sp
-.\}
-.RS 4
-.it 1 an-trap
-.nr an-no-space-flag 1
-.nr an-break-flag 1
-.br
-.ps +1
-\fBWarning\fR
-.ps -1
-.br
-.sp
-Program will not work in plugins if gpg\-agent is not running
-.sp .5v
-.RE
-.if n \{\
-.sp
-.\}
-.RS 4
-.it 1 an-trap
-.nr an-no-space-flag 1
-.nr an-break-flag 1
-.br
-.ps +1
-\fBWarning\fR
-.ps -1
-.br
-.sp
-gpg\-agent is highly recommended, and the rpass is truly useful only after enabling gpg\-agent
-.sp .5v
-.RE
 .sp
 If installing from source:
 .sp
@@ -140,23 +94,6 @@ If installing from source:
 .\}
 .sp
 Run rpass once to set up \fBgpg\fR (generate keys) if this has not been done already\&.
-.SH "GPG-AGENT"
-.sp
-While rpass will work fine if gpg\-agent is not running, it really shines when gpg\-agent is being used\&. Furthermore, in an X\-based environment where it is being used as a plugin, practically speaking gpg\-agent must be used\&.
-.sp
-All you need to do is run
-.sp
-.if n \{\
-.RS 4
-.\}
-.nf
-# eval $(gpg\-agent \-\-daemon \-\-write\-env\-file)
-.fi
-.if n \{\
-.RE
-.\}
-.sp
-anytime after or during user login\&.
 .SH "USAGE"
 .if n \{\
 .sp
@@ -245,10 +182,29 @@ The command \fBrpass \-a\fR brings up an interface to add accounts and informati
 .sp
 After installation, the module can be imported with "import rpass"\&. See the module source for more details\&.
 .SH "PLUGIN"
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBWarning\fR
+.ps -1
+.br
+.sp
+For rpass to be effective as a plugin, you need \fBgpg\-agent\fR
+.sp .5v
+.RE
 .sp
 For any python program or program with support for python plugins, "import rpass" will allow you to use all the functions of the main program\&.
 .sp
 For other programs and scripts, rpass \-b results in usage that does exact matching, prints without color or other formatting commands, and allows selection of fields to print\&.
+.SH "SEE ALSO"
+.sp
+gpg\-agent(1), gpg(1)
 .SH "GOALS"
 .sp
 .RS 4
