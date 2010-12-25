@@ -10,11 +10,11 @@ rpass - secure (i.e. encrypted), simple, command-line password manager
 SYNOPSIS
 --------
 
-*rpass* -a
+*rpass* -a ['NEW ACCOUNT NAMES'...]
 
 *rpass* -d 'ACCOUNT NAME'
 
-*rpass* ['OPTIONS'] 'PATTERN'
+*rpass* ['OPTIONS'] 'PATTERNS' ...
 
 DESCRIPTION
 -----------
