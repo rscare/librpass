@@ -1,5 +1,67 @@
 #!/usr/bin/python
 
+def PrintAccountInfo(acinfo, pfull = False, ppass = False, keys = None, batch = False):
+    fgnescape = '\x1b[0;38;5;{0}m'
+    bgnescape = '\x1b[0;48;5;{0}m'
+    fgbescape = '\x1b[1;38;5;{0}m'
+
+    ac_color = fgbescape.format(7)
+    user_color = fgnescape.format(6)
+    pass_color = fgnescape.format(9)
+
+    if keys and ('pass' in keys): ppass = True
+
+    for ac in sorted(acinfo.keys()):
+        if batch:
+                for (k, v) in acinfo[ac].items():
+                    if (not(keys) or (k in keys)) and ((k != 'pass') or ppass):
+                        print(v)
+        else:
+            if 'user' in acinfo[ac]:
+                print("{0}{1} - {2}{3}".format(ac_color, ac, user_color, acinfo[ac]['user']))
+            else: print("{0}{1}".format(ac_color, ac))
+
+            if ppass and ('pass' in acinfo[ac]):
+                print("\t{0}{1}".format(pass_color, acinfo[ac]['pass']))
+
+            if pfull:
+                for (k, v) in acinfo[ac].items():
+                    if k not in ['user', 'pass']:
+                        print("\t{0}: {1}".format(k, v))
+
+def AddEntry(acname = None, pinfo = None, passfile = None):
+    from rpass import ParsePassFile,ExistingEntry,EncryptPassFile
+
+    if pinfo == None: pinfo = ParsePassFile(passfile = passfile)
+    if not(acname): acname = input("Account name: ")
+    if (acname) in pinfo.keys(): raise ExistingEntry
+    pinfo[acname] = {}
+
+    usr = input("User - leave blank to remove field: ")
+
+    from getpass import getpass as gp
+    pwrd = gp("Password - leave blank to remove field (typed letters do not appear): ")
+
+    if usr.strip():
+        pinfo[acname]['user'] = usr
+    if pwrd.strip():
+        pinfo[acname]['pass'] = pwrd
+
+    response = input("Would you like to add additional fields to the entry? [N/y] ")
+    if response != '' and response.lower()[0] == 'y':
+        print("Please type field and hit enter - blank field cancels.")
+        field = input("Field: ")
+        while(field):
+            if field in ["username", "u"]: field = "user"
+            if field in ["password", "p", "pass"]:
+                from getpass import getpass as gp
+                field = "pass"
+                pinfo[acname][field] = gp("{0}: ".format(field))
+            else:
+                pinfo[acname][field] = input("{0}: ".format(field))
+            field = input("Field: ")
+    return pinfo
+
 if __name__=="__main__":
     from optparse import OptionParser
     from rpass import *

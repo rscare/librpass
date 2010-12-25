@@ -80,36 +80,6 @@ def GetAccountInfo(account, pinfo = None, strict = False):
 
     return accountdict
 
-def PrintAccountInfo(acinfo = None, account = '.', pfull = False, ppass = False, keys = None, batch = False):
-    fgnescape = '\x1b[0;38;5;{0}m'
-    bgnescape = '\x1b[0;48;5;{0}m'
-    fgbescape = '\x1b[1;38;5;{0}m'
-
-    if acinfo == None: acinfo = GetAccountInfo(account, strict = batch)
-
-    ac_color = fgbescape.format(7)
-    user_color = fgnescape.format(6)
-    pass_color = fgnescape.format(9)
-
-    if keys:
-        acinfokeys = keys
-
-    for ac in sorted(acinfo.keys()):
-        if not(batch):
-            if 'user' in acinfo[ac]:
-                print(ac_color + ac + " - {0}{1}".format(user_color,acinfo[ac]['user']))
-            else: print(ac_color + ac)
-            if ppass and ('pass' in acinfo[ac]):
-                print("\t{0}{1}".format(pass_color,acinfo[ac]['pass']))
-            if pfull:
-                for (k, v) in acinfo[ac].items():
-                    if k not in ['user', 'pass']:
-                        print("\t{0}: {1}".format(k, v))
-        else:
-            for (k, v) in acinfo[ac].items():
-                if not(acinfokeys) or (k in acinfokeys):
-                    print(v)
-
 def CopyPass(account = '.', acinfo = None):
     if acinfo == None: acinfo = GetAccountInfo(account)
     from subprocess import Popen,PIPE
@@ -120,30 +90,6 @@ def CopyPass(account = '.', acinfo = None):
             copyproc = Popen(['xclip'], shell=False, stdin=echoproc.stdout)
             return True
     return False
-
-def AddEntry(new_entry = None, pinfo = None, passfile = None):
-    if pinfo == None: pinfo = ParsePassFile(passfile = passfile)
-    if new_entry == None:
-        acname = input("Account name: ")
-        if (acname) in pinfo.keys(): raise ExistingEntry
-        pinfo[acname] = {}
-        print("Please enter field followed by value - blank field cancels.")
-        field = input("Field: ")
-        while(field):
-            if field in ["username", "u"]: field = "user"
-            if field in ["password", "p", "pass"]:
-                from getpass import getpass as gp
-                field = "pass"
-                pinfo[acname][field] = gp("{0}: ".format(field))
-            else:
-                pinfo[acname][field] = input("{0}: ".format(field))
-            field = input("Field: ")
-    else:
-        acname = new_entry['acname']
-        if acname in pinfo.keys(): raise ExistingEntry
-        pinfo[acname] = {key:value for (key, value) in new_entry.items() if key != 'acname'}
-
-    EncryptPassFile(CreatePassFile(pinfo))
 
 def CreatePassFile(pinfo):
     contents = ""
