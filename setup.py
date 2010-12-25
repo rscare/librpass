@@ -15,6 +15,6 @@ setup(name = 'rpass',
         author = 'Yuri D. Lenskiy',
         author_email = 'yuri.lenskiy@gmail.com',
         py_modules = ['rpass'],
-        scripts = ['rpass'],
+        scripts = ['rpass', 'rpass_py_interface'],
         data_files = [('share/man/man1', ['rpass.1'])]
         )

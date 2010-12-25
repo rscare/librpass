@@ -14,6 +14,18 @@ class InvalidEncryptionKey(ValueError):
     """Exception raised when key is nonexistent or incorrect."""
     pass
 
+def IsRunning(procname):
+    import re
+    from subprocess import Popen,PIPE
+
+    ppatt = re.compile(r'^\s*\d+ \S*\s*\d\d:\d\d:\d\d (.*)$')
+    proc = Popen(['ps', '-e'], stdout = PIPE, stderr = PIPE)
+
+    plist = [re.match(ppatt, p.strip()).groups()[0] for p in str(proc.communicate()[0], encoding='utf-8').split('\n')[1:-1]]
+
+    if procname in plist: return True
+    else: return False
+
 def DecryptPassFile(passfile = None):
      if passfile == None:
          from os.path import expanduser,join
@@ -23,9 +35,10 @@ def DecryptPassFile(passfile = None):
      if not isfile(passfile): raise IOError
 
      from subprocess import Popen,PIPE
-     proc = Popen(['ps', '-e'], stdout = PIPE, stderr = PIPE)
+
      proclst = ['gpg', '--quiet', '--output', '-', '--decrypt', passfile]
-     if 'gpg-agent' in str(proc.communicate()[0], encoding = 'utf-8'): proclst.insert(1, '--no-tty')
+     if IsRunning('gpg-agent'): proclst.insert(1, '--no-tty')
+
      proc = Popen(proclst, stdout = PIPE, stderr = PIPE)
  
      retstr, errstr = tuple(str(s, encoding = "utf-8") for s in proc.communicate())

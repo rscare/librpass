@@ -1,0 +1,169 @@
+#!/usr/bin/python
+
+def PrintAccountInfo(acinfo, pfull = False, ppass = False, keys = None, batch = False):
+    fgnescape = '\x1b[0;38;5;{0}m'
+    bgnescape = '\x1b[0;48;5;{0}m'
+    fgbescape = '\x1b[1;38;5;{0}m'
+
+    ac_color = fgbescape.format(7)
+    user_color = fgnescape.format(6)
+    pass_color = fgnescape.format(9)
+
+    if keys and ('pass' in keys): ppass = True
+
+    for ac in sorted(acinfo.keys()):
+        if batch:
+                for (k, v) in acinfo[ac].items():
+                    if (not(keys) or (k in keys)) and ((k != 'pass') or ppass):
+                        print(v)
+        else:
+            if 'user' in acinfo[ac]:
+                print("{0}{1} - {2}{3}".format(ac_color, ac, user_color, acinfo[ac]['user']))
+            else: print("{0}{1}".format(ac_color, ac))
+
+            if ppass and ('pass' in acinfo[ac]):
+                print("\t{0}{1}".format(pass_color, acinfo[ac]['pass']))
+
+            if pfull:
+                for (k, v) in acinfo[ac].items():
+                    if k not in ['user', 'pass']:
+                        print("\t{0}: {1}".format(k, v))
+
+def AddEntry(acname = None, pinfo = None, passfile = None):
+    from rpass import ParsePassFile,ExistingEntry,EncryptPassFile
+
+    if pinfo == None: pinfo = ParsePassFile(passfile = passfile)
+    if not(acname): acname = input("Account name: ")
+    if (acname) in pinfo.keys(): raise ExistingEntry
+    pinfo[acname] = {}
+
+    usr = input("User - leave blank to remove field: ")
+
+    from getpass import getpass as gp
+    pwrd = gp("Password - leave blank to remove field (typed letters do not appear): ")
+
+    if usr.strip():
+        pinfo[acname]['user'] = usr
+    if pwrd.strip():
+        pinfo[acname]['pass'] = pwrd
+
+    response = input("Would you like to add additional fields to the entry? [N/y] ")
+    if response != '' and response.lower()[0] == 'y':
+        print("Please type field and hit enter - blank field cancels.")
+        field = input("Field: ")
+        while(field):
+            if field in ["username", "u"]: field = "user"
+            if field in ["password", "p", "pass"]:
+                from getpass import getpass as gp
+                field = "pass"
+                pinfo[acname][field] = gp("{0}: ".format(field))
+            else:
+                pinfo[acname][field] = input("{0}: ".format(field))
+            field = input("Field: ")
+    return pinfo
+
+if __name__=="__main__":
+    from optparse import OptionParser
+    from rpass import *
+    from os.path import expanduser,isfile
+    from os.path import join as path_join
+    from os import stat
+    import subprocess
+
+    secring = path_join(expanduser('~'), '.gnupg', 'secring.gpg')
+    if not(isfile(secring)) or stat(secring).st_size == 0:
+        print("Need to first create gpg key pair.")
+        print("Choose a secure passphrase -- this is going to be your 'master' password.")
+        print("Rerun program after key creation.\n")
+        print("WARNING: DO NOT pick a sign-only key type.\n")
+        print("-------------------------------------------------------------------------")
+        input("Press [ENTER] when ready.")
+        subprocess.call('gpg --gen-key'.split(' '))
+        exit()
+
+    if not(IsRunning('gpg-agent')):
+        print("gpg-agent is not running. This is not recommended. Continuing anyway...")
+
+    parser = OptionParser()
+
+    parser.add_option("-b", "--batch", dest="batch_mode",
+            action="store_true", default=False,
+            help="Option to print in batch mode: no colors, no copying, no field labels, no formatting.")
+
+    parser.add_option("-u", "--users", dest="print_users",
+            action="store_true", default=False,
+            help="Option to print usernames.")
+
+    parser.add_option("--passwords", dest="print_pass",
+            action="store_true", default=False,
+            help="Print passwords to stdout.")
+
+    parser.add_option("-n", "--no-copy", dest="xclip",
+            action="store_false", default=True,
+            help="Don't copy alphabetically first matching password to clipboard.")
+
+    parser.add_option("-l", "--login", dest="login",
+            action="store_true", default=False,
+            help="Just login, don't show anything.")
+
+    parser.add_option("-a", "--add-entry", dest="new_entry",
+            action="store_true", default=False)
+
+    parser.add_option("-d", "--delete-entry", dest="delete_entry",
+            action = "store")
+
+    parser.add_option("-k", "--keys", dest="print_keys",
+            action = "store", type = "string")
+
+    (options, args) = parser.parse_args()
+
+    acinfo = {}
+    pfull = False
+    keys = []
+
+    if options.login:
+        try:
+            DecryptPassFile()
+            exit(0)
+        except InvalidEncryptionKey:
+            exit(1)
+
+    elif options.new_entry:
+        pinfo = None
+
+        try:
+            if len(args) > 0:
+                for arg in args: pinfo = AddEntry(acname = arg, pinfo = pinfo)
+            else: pinfo = AddEntry(pinfo = pinfo)
+        except IOError:
+            response = input("No password file found. Shall I create one? [Y/n] ")
+            if response == '' or response.lower()[0] != 'n':
+                FILE = open(path_join(expanduser('~'), '.passwords.gpg'), 'w'); FILE.close()
+                if len(args) > 0:
+                    for arg in args: pinfo = AddEntry(acname = arg, pinfo = pinfo)
+                else: pinfo = AddEntry(pinfo = pinfo)
+
+        if pinfo: EncryptPassFile(CreatePassFile(pinfo))
+        exit()
+
+    elif options.delete_entry:
+        DeleteEntry(options.delete_entry); exit()
+
+    else:
+        try:
+            if len(args) > 0:
+                pfull = True
+                for arg in args: 
+                    acinfo.update(GetAccountInfo(arg, strict = options.batch_mode))
+                if not(options.batch_mode) and options.xclip: 
+                    CopyPass(acinfo=acinfo)
+            else:
+                acinfo = ParsePassFile()
+
+            if options.print_users: keys.append("user")
+            if options.print_pass: keys.extend(["pass"])
+            if options.print_keys: keys.extend(options.print_keys.split(','))
+
+            PrintAccountInfo(acinfo=acinfo, ppass=options.print_pass, pfull = pfull, keys = keys, batch = options.batch_mode)
+        except IOError:
+            print("No password file found...create it with 'rpass -a'")
