@@ -157,7 +157,11 @@ if __name__=="__main__":
                 for arg in args: 
                     acinfo.update(GetAccountInfo(arg, strict = options.batch_mode))
                 if not(options.batch_mode) and options.xclip: 
-                    CopyPass(acinfo=acinfo)
+                    try:
+                        CopyPass(acinfo=acinfo)
+                    except OSError:
+                        print("'xclip' not found. Please install xclip to automatically copy first matched password to clipboard (avoid printing passwords).")
+                        print("To see passwords, run rpass with the --passwords option.\n")
             else:
                 acinfo = ParsePassFile()
 
