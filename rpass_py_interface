@@ -126,6 +126,7 @@ if __name__=="__main__":
             DecryptPassFile()
             exit(0)
         except InvalidEncryptionKey:
+            print("Login failed (bad password or bad keyfile).")
             exit(1)
 
     elif options.new_entry:
