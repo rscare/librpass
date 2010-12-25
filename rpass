@@ -69,28 +69,33 @@ if __name__=="__main__":
     from os.path import join as path_join
 
     parser = OptionParser()
+
     parser.add_option("-b", "--batch", dest="batch_mode",
             action="store_true", default=False,
             help="Option to print in batch mode: no colors, no copying, no field labels, no formatting.")
-    parser.add_option("-p", "--print", dest="printing_mode",
-            action="store_true", default=False,
-            help="Option to print only selected information.")
+
     parser.add_option("-u", "--users", dest="print_users",
             action="store_true", default=False,
             help="Option to print usernames.")
+
     parser.add_option("--passwords", dest="print_pass",
             action="store_true", default=False,
             help="Print passwords to stdout.")
+
     parser.add_option("-n", "--no-copy", dest="xclip",
             action="store_false", default=True,
             help="Don't copy alphabetically first matching password to clipboard.")
+
     parser.add_option("-l", "--login", dest="login",
             action="store_true", default=False,
             help="Just login, don't show anything.")
+
     parser.add_option("-a", "--add-entry", dest="new_entry",
             action="store_true", default=False)
+
     parser.add_option("-d", "--delete-entry", dest="delete_entry",
             action = "store")
+
     parser.add_option("-k", "--keys", dest="print_keys",
             action = "store", type = "string")
 
@@ -108,13 +113,21 @@ if __name__=="__main__":
             exit(1)
 
     elif options.new_entry:
+        pinfo = None
+
         try:
-            AddEntry()
+            if len(args) > 0:
+                for arg in args: pinfo = AddEntry(acname = arg, pinfo = pinfo)
+            else: pinfo = AddEntry(pinfo = pinfo)
         except IOError:
             response = input("No password file found. Shall I create one? [Y/n] ")
-            if response == '' or not(response.lower()[0] == 'n'):
+            if response == '' or response.lower()[0] != 'n':
                 FILE = open(path_join(expanduser('~'), '.passwords.gpg'), 'w'); FILE.close()
-                AddEntry()
+                if len(args) > 0:
+                    for arg in args: pinfo = AddEntry(acname = arg, pinfo = pinfo)
+                else: pinfo = AddEntry(pinfo = pinfo)
+
+        if pinfo: EncryptPassFile(CreatePassFile(pinfo))
         exit()
 
     elif options.delete_entry:
@@ -123,16 +136,17 @@ if __name__=="__main__":
     else:
         try:
             if len(args) > 0:
-                for arg in args: acinfo.update(GetAccountInfo(arg, strict = options.batch_mode))
                 pfull = True
-                if not(options.batch_mode) and options.xclip: CopyPass(acinfo=acinfo)
+                for arg in args: 
+                    acinfo.update(GetAccountInfo(arg, strict = options.batch_mode))
+                if not(options.batch_mode) and options.xclip: 
+                    CopyPass(acinfo=acinfo)
             else:
-                acinfo = GetAccountInfo('.', strict = options.batch_mode)
+                acinfo = ParsePassFile()
 
-            if options.printing_mode:
-                if options.print_users: keys.append("user")
-                if options.print_pass: keys.extend(["pass", "password"])
-                if options.print_keys: keys.extend(options.print_keys.split(','))
+            if options.print_users: keys.append("user")
+            if options.print_pass: keys.extend(["pass"])
+            if options.print_keys: keys.extend(options.print_keys.split(','))
 
             PrintAccountInfo(acinfo=acinfo, ppass=options.print_pass, pfull = pfull, keys = keys, batch = options.batch_mode)
         except IOError:

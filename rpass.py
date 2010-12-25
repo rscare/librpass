@@ -69,7 +69,6 @@ def GetAccountInfo(account, pinfo = None, strict = False):
     import re
     accountpatt = ''
     if strict:
-        if account == '.': account = '.*'
         accountpatt = re.compile("^{0}$".format(account))
     else:
         accountpatt = re.compile(account, re.I)
