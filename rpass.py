@@ -30,7 +30,7 @@ def DecryptPassFile(passfile = None):
  
      retstr, errstr = tuple(str(s, encoding = "utf-8") for s in proc.communicate())
      if errstr.find("gpg: no valid OpenPGP data found.") != -1: raise UnencryptedFile
-     elif errstr.find("gpg: decryption failed: secret key not available") != -1: raise InvalidEncryptionKey
+     elif (errstr.find("gpg: decryption failed: secret key not available") != -1) or (errstr.find("gpg: decrypt_message failed: eof") != -1): raise InvalidEncryptionKey
 
      return retstr.strip()
 
