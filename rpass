@@ -1,6 +1,6 @@
 if [ ! $(pgrep gpg-agent) ]; then
     echo "Starting gpg-agent..."
-    echo "WARNING: unless you export the proper environment variables (see `man gpg-agent`) this instance of gpg-agent may only work for rpass."
+    echo "WARNING: unless you export the proper environment variables (see 'man gpg-agent') this instance of gpg-agent may only work for rpass."
     eval $(gpg-agent --daemon --enable-ssh-support --write-env-file)
 fi
 
@@ -11,4 +11,4 @@ if [ -f ${HOME}/.gpg-agent-info ]; then
     export SSH_AGENT_PID
 fi
 
-./rpass_py_interface
+rpass_py_interface
