@@ -1,39 +1,85 @@
-NOTE: If you have never used gpg before, read the SETUP section.
+rpass(1)
+========
+Yuri D. Lenskiy <yuri.lenskiy@gmail.com>
 
-CONTENTS
+NAME
+----
 
-    GENERAL
-        Goals
-    GPG-AGENT
-    SETUP
-    USAGE
-    PLUGIN
-    DEPENDENCIES
+rpass - secure (i.e. encrypted), simple, command-line password manager
 
-GENERAL
+SYNOPSIS
+--------
 
 'rpass' is a module and related executable that are meant to make secure
 password management through the commandline and almost all programs accessible,
 convenient, and easy.
 
 Goals:
-
-Secure
+~~~~~~
+* Secure
     - Passwords are never written out in plaintext to harddrive under ANY conditions
     - With 'xclip' installed, passwords never need to even be seen
-Simple user interface
+* Simple user interface
     - Automatic copying
     - Intuitive, simple searching
     - Powerful regular expression searching
-Transparent code
+* Transparent code
     - Simple codebase allows bugs to surface quickly, adding to security
-Pluggable
+* Pluggable
     - Importable python module for integration to other python programs
     - Batch mode for executable
-Universal password solution
-    - Possible ONLY WITH GPG-AGENT
+* Universal password solution
 
-GPG-AGENT -- DO THIS
+DEPENDENCIES
+------------
+
+* The executable 'gpg' must be in your $PATH.
+* In order for copying to the X-clipboard to work, 'xclip' must be in the user's $PATH.
+* gpg-agent for tool to be used to full potential.
+
+SETUP
+-----
+
+IMPORTANT: gnupg setup required
+
+WARNING: gpg-agent makes rpass useful
+
+WARNING: Program will not work in plugins if gpg-agent is not running
+
+
+If installing from source:
+
+----
+# python setup.py install
+----
+
+Gnupg:
+~~~~~~
+
+If you do not yet have a key pair (i.e. if you have never used gpg before), run
+
+----
+# gpg --gen-key 
+----
+
+and follow the directions (make sure you pick an option for key
+type that is not sign-only). Pick a SECURE passphrase, this is your 'master' password.
+
+gpg-agent:
+~~~~~~~~~~
+
+Run the command
+
+----
+# eval $(gpg-agent --daemon --write-env-file)
+----
+
+on login.
+
+GPG-AGENT
+---------
+
+WARNING: This is highly recommended, and the rpass is truly useful only after enabling gpg-agent
 
 While rpass will work fine if gpg-agent is not running, it really shines when
 gpg-agent is being used. Furthermore, in an X-based environment where it is
@@ -41,47 +87,30 @@ being used as a plugin, practically speaking gpg-agent must be used.
 
 All you need to do is run
 
+----
 # eval $(gpg-agent --daemon --write-env-file)
-
-on login.
-
-SETUP
-
-If installing from source:
-
-# python setup.py install
-
-Gnupg (REQUIRED):
-
-If you do not yet have a key pair (i.e. if you have never used gpg before), run
-
-# gpg --gen-key 
-
-and follow the directions (make sure you pick an option for key
-type that is not sign-only). Pick a SECURE passphrase, this is your 'master' password.
-
-gpg-agent (HIGHLY RECOMMENDED):
-
-Run the command
-
-# eval $(gpg-agent --daemon --write-env-file)
+----
 
 on login.
 
 USAGE
+-----
+
+WARNING: It is highly recommended to have 'xclip' installed so that
+passwords never have to be written to stdout.
 
 NOTE: Passwords are never printed unless stated explicitly (see 'rpass -h')
-SECURITY NOTE: It is highly recommended to have 'xclip' installed so that
-passwords never have to be written to stdout.
 
 The command 'rpass' on its own will list account names and corresponding fields
 in the following format:
 
+----
 # rpass
 Account Name 1 - username1
 Account Name 2 - username2
 Account Name 3 <---------- There are no required fields in rpass apart from account name
 ...
+----
 
 The command 'rpass' followed by any text will print any accounts that contain
 the text in the account name, case-insensitive (regular expressions allowed) in
@@ -89,17 +118,21 @@ the following format:
 
 Simple query:
 
+----
 # rpass 1
 Account Name 1 - username1
 ...
+----
 
 Regular expressions:
 
+----
 # rpass "name (1|3)$"
 Account Name 1 - username1
 Account Name 3
     optional_field1: optional_value1
 ...
+----
 
 Additionally, the password of the first matching account will be copied to the
 X-clipboard if 'xclip' is in the user's $PATH.
@@ -110,6 +143,7 @@ See rpass -h for more information.
 After installation, the module can be imported with 'import rpass'. See the module source for more details.
 
 PLUGIN
+------
 
 For any python program or program with support for python plugins, 'import
 rpass' will allow you to use all the functions of the main program.
@@ -118,10 +152,4 @@ For other programs and scripts, 'rpass -b' results in usage that does exact
 matching, prints without color or other formatting commands, and allows
 selection of fields to print.
 
-DEPENDENCIES
-
-The executable 'gpg' must be in your $PATH.
-
-In order for copying to the X-clipboard to work, 'xclip' must be in the user's $PATH.
-
-gpg-agent for tool to be used to full potential.
+// vim:filetype=asciidoc:
