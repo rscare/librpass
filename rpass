@@ -65,8 +65,21 @@ def AddEntry(acname = None, pinfo = None, passfile = None):
 if __name__=="__main__":
     from optparse import OptionParser
     from rpass import *
-    from os.path import expanduser
+    from os.path import expanduser,isfile
     from os.path import join as path_join
+    from os import stat
+    import subprocess
+
+    secring = path_join(expanduser('~'), '.gnupg', 'secring.gpg')
+    if not(isfile(secring)) or stat(secring).st_size == 0:
+        print("Need to first create gpg key pair.")
+        print("Choose a secure passphrase -- this is going to be your 'master' password.")
+        print("Rerun program after key creation.\n")
+        print("WARNING: DO NOT pick a sign-only key type.\n")
+        print("-------------------------------------------------------------------------")
+        input("Press [ENTER] when ready.")
+        subprocess.call('gpg --gen-key'.split(' '))
+        exit()
 
     parser = OptionParser()
 
