@@ -34,8 +34,6 @@ DEPENDENCIES
 SETUP
 -----
 
-IMPORTANT: gnupg setup required
-
 WARNING: gpg-agent makes rpass useful
 
 WARNING: Program will not work in plugins if gpg-agent is not running
@@ -49,18 +47,7 @@ If installing from source:
 # python setup.py install
 ----
 
-Gnupg:
-~~~~~~
-
-If you do not yet have a key pair (i.e. if you have never used gpg before), run
-
-----
-# gpg --gen-key 
-----
-
-and follow the directions (make sure you pick an option for key
-type that is not sign-only). Pick a SECURE passphrase, this is your "master"
-password.
+Run rpass once to set up *gpg* (generate keys) if this has not been done already.
 
 gpg-agent:
 ~~~~~~~~~~
