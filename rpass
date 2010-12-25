@@ -1,7 +1,8 @@
 if [ ! $(pgrep gpg-agent) ]; then
+    echo "gpg-agent not running..."
     echo "Starting gpg-agent..."
-    echo "WARNING: unless you export the proper environment variables (see 'man gpg-agent') this instance of gpg-agent may only work for rpass."
     eval $(gpg-agent --daemon --enable-ssh-support --write-env-file)
+    echo "WARNING: If you only use gpg-agent for rpass, don't worry about this. If not (i.e. you also encrypt/sign files), start gpg-agent as per its manpage on login (i.e. in .xsession or in .profile)."
 fi
 
 if [ -f ${HOME}/.gpg-agent-info ]; then
@@ -12,3 +13,5 @@ if [ -f ${HOME}/.gpg-agent-info ]; then
 fi
 
 rpass_py_interface
+
+# vim: filetype=sh :
