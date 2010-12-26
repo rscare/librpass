@@ -29,12 +29,13 @@ def PrintAccountInfo(acinfo, pfull = False, ppass = False, keys = None, batch = 
                     if k not in ['user', 'pass']:
                         print("\t{0}: {1}".format(k, v))
 
-def AddEntry(acname = None, pinfo = None, passfile = None):
+def AddEntry(acname = None, pinfo = None, passfile = None, nfile = False):
     from rpass import ParsePassFile,ExistingEntry,EncryptPassFile
 
-    if pinfo == None: pinfo = ParsePassFile(passfile = passfile)
+    if pinfo == None and not(nfile): pinfo = ParsePassFile(passfile = passfile)
     if not(acname): acname = input("Account name: ")
-    if (acname) in pinfo.keys(): raise ExistingEntry
+    if pinfo and ((acname) in pinfo.keys()): raise ExistingEntry
+    if type(pinfo) != dict: pinfo = {}
     pinfo[acname] = {}
 
     usr = input("User - leave blank to remove field: ")
@@ -141,8 +142,9 @@ if __name__=="__main__":
             if response == '' or response.lower()[0] != 'n':
                 FILE = open(path_join(expanduser('~'), '.passwords.gpg'), 'w'); FILE.close()
                 if len(args) > 0:
-                    for arg in args: pinfo = AddEntry(acname = arg, pinfo = pinfo)
-                else: pinfo = AddEntry(pinfo = pinfo)
+                    pinfo = AddEntry(acname = args[0], pinfo = pinfo, nfile = True)
+                    for arg in args[1:]: pinfo = AddEntry(acname = arg, pinfo = pinfo, nfile = False)
+                else: pinfo = AddEntry(pinfo = pinfo, nfile = True)
 
         if pinfo: EncryptPassFile(CreatePassFile(pinfo))
         exit()
