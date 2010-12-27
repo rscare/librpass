@@ -204,11 +204,11 @@ def GetOptions():
 
     parser.add_option('-f', '--password-file', dest = 'pass_file',
             action = 'store', type = 'string',
-            help = "Specify a password file other than the default [.passwords.gpg].")
+            help = "Specify a password file other than the default [~/.passwords.gpg].")
 
     parser.add_option("-C", "--config-file", dest="conf_file",
             action = "store", type = "string",
-            help = "Specify a configuration file other than the default [.rpass.conf].")
+            help = "Specify a configuration file other than the default [~/.rpass.conf].")
 
     parser.add_option("-c", "--color", dest='color',
             action = "count", default = 0,
