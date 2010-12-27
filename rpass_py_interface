@@ -144,15 +144,19 @@ def GetOptions():
 
     parser.add_option("-u", "--users", dest="print_users",
             action="store_true", default=False,
-            help="Add users to printed fields.")
+            help="Add users to printed fields [default].")
 
     parser.add_option("-p", "--passwords", dest="print_pass",
             action="store_true", default=False,
             help="Add passwords to printed fields.")
 
-    parser.add_option("-n", "--no-copy", dest="xclip",
-            action="store_false", default=True,
+    parser.add_option("-n", "--no-copy", dest="no_xclip",
+            action="count", default = 0,
             help="Don't copy alphabetically first matching password to clipboard.")
+
+    parser.add_option("--copy", dest="xclip",
+            action="count", default = 0,
+            help="Copy alphabetically first matching password to clipboard [default].")
 
     parser.add_option("-l", "--login", dest="login",
             action="store_true", default=False,
@@ -192,7 +196,9 @@ def GetOptions():
 
     fops = info
     fops['batch'] = options.batch_mode
-    fops['copy'] = options.xclip
+    if options.xclip > 0: fops['copy'] = True
+    if options.no_xclip > 0: fops['copy'] = False
+    if 'copy' not in fops: fops['copy'] = True
     fops['login'] = options.login
     fops['new_entry'] = options.new_entry
     fops['del_entry'] = options.delete_entry
