@@ -104,7 +104,7 @@ def ReadConfigFile(filename, info = {}):
         else:
             from shutil import copyfile
             try:
-                copyfile(fexample, filename)
+                copyfile(fexample, expanduser(filename))
                 print("Copied example config (default values) to {0}.".format(filename))
             except IOError as e:
                 print("Could not copy default config to {0}.".format(filename))
