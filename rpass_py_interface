@@ -87,7 +87,7 @@ def ReadConfigFile(filename, info = {}):
     if not(isfile(expanduser(filename))):
         from sys import path
 
-        paths = ["{0}/../share/rpass/", "/usr/share/rpass/", "/usr/local/share/rpass/"]
+        paths = ["{0}/../share/rpass/", "/usr/share/rpass/", "/usr/local/share/rpass/", "{0}/"]
         paths = [p + 'rpass.example.conf' for p in paths]
 
         fexample = None
