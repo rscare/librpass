@@ -27,7 +27,7 @@ def PrintAccountInfo(acinfo, keys, pfull = False, batch = False):
             if ('pass' in keys) and ('pass' in acinfo[ac]):
                 print("\t{0}{1}".format(pass_color, acinfo[ac]['pass']))
 
-            if pfull or len(keys) > 0:
+            if pfull:
                 for (k, v) in acinfo[ac].items():
                     if k not in ['user', 'pass']:
                         print("\t{0}: {1}".format(k, v))
