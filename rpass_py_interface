@@ -4,6 +4,7 @@ def PrintAccountInfo(acinfo, keys, pfull = False, batch = False):
     fgnescape = '\x1b[0;38;5;{0}m'
     bgnescape = '\x1b[0;48;5;{0}m'
     fgbescape = '\x1b[1;38;5;{0}m'
+    txtreset = "\x1b[0m"
 
     ac_color = fgbescape.format(7)
     user_color = fgnescape.format(6)
@@ -26,6 +27,8 @@ def PrintAccountInfo(acinfo, keys, pfull = False, batch = False):
 
             if ('pass' in keys) and ('pass' in acinfo[ac]):
                 print("\t{0}{1}".format(pass_color, acinfo[ac]['pass']))
+
+            print(txtreset, end='')
 
             if pfull:
                 for (k, v) in acinfo[ac].items():
