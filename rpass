@@ -1,4 +1,4 @@
-if [ ! $(pgrep gpg-agent) ]; then
+if [ ! $(pgrep -u $UID gpg-agent) ]; then
     echo "gpg-agent not running..."
     echo "Starting gpg-agent..."
     eval $(gpg-agent --daemon --enable-ssh-support --write-env-file)
