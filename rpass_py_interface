@@ -258,10 +258,6 @@ def GetOptions():
 
 if __name__=="__main__":
     import rpass
-    from os.path import expanduser,isfile
-    from os.path import join as path_join
-    from os import stat
-    import subprocess
 
     if not(HasGPGKey()):
         CreateGPGKey()
