@@ -37,7 +37,10 @@ def DecryptPassFile(passfile = None):
      from subprocess import Popen,PIPE
 
      proclst = ['gpg', '--quiet', '--output', '-', '--decrypt', passfile]
-     if IsRunning('gpg-agent'): proclst.insert(1, '--no-tty')
+
+     if IsRunning('gpg-agent'): 
+         proclst.insert(1, '--no-tty')
+         proclst.insert(1, '--use-agent')
 
      proc = Popen(proclst, stdout = PIPE, stderr = PIPE)
  
