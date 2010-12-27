@@ -58,7 +58,7 @@ CONFIGURATION
 Upon installation a heavily commented configuration file is placed in the home
 directory at ~/.rpass.conf. If you delete or change this configuration file
 and want to see the comments/documentation again, there is one located in
-/usr/share/rpass/rpass.example.conf.
+$PREFIX/share/rpass/rpass.example.conf.
 
 In this configuration file you can set up most of the relevant defaults to *rpass*.
 
