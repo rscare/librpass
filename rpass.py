@@ -26,96 +26,213 @@ def IsRunning(procname):
     if procname in plist: return True
     else: return False
 
-def DecryptPassFile(passfile):
-     from os.path import isfile
-     if not isfile(passfile): raise IOError
+class rpass:
+    """ Class to encapsulate an rpass user """
 
-     from subprocess import Popen,PIPE
+    def __init__(self, conf_file = '~/.rpass.conf', passfile = None, executable = False):
+        """Initialized rpass from an optional configuration file and arguments.
+        
+        Set executable to 'true' if instance is not being used for a plugin."""
 
-     proclst = ['gpg', '--quiet', '--output', '-', '--decrypt', passfile]
+        from os.path import isfile,expanduser
 
-     if IsRunning('gpg-agent'): 
-         proclst.insert(1, '--no-tty')
-         proclst.insert(1, '--use-agent')
+        if not(self.HasGPGKey()):
+            self.CreateGPGKey()
 
-     proc = Popen(proclst, stdout = PIPE, stderr = PIPE)
- 
-     retstr, errstr = tuple(str(s, encoding = "utf-8") for s in proc.communicate())
-     if errstr.find("gpg: no valid OpenPGP data found.") != -1: raise UnencryptedFile
-     elif (errstr.find("gpg: decryption failed: secret key not available") != -1) or (errstr.find("gpg: decrypt_message failed: eof") != -1): raise InvalidEncryptionKey
+        self.executable = executable
+        if not(self.executable) and not(IsRunning('gpg-agent')):
+            raise RuntimeError("No gpg-agent running when rpass is being used as a plugin.")
+        self.conf_file = conf_file
+        (self.options, self.copyerror) = self.ReadConfigFile(filename = self.conf_file)
 
-     return retstr.strip()
+        if passfile != None: self.options['passfile'] = passfile
+        if ('passfile' not in self.options) or not(self.options['passfile']): self.options['passfile'] = '~/.passwords.gpg'
 
-def EncryptPassFile(passfile, contents):
-    from os.path import exists
-    from subprocess import Popen,PIPE
-    textproc = Popen(['echo', contents], shell=False, stdout=PIPE)
-    encproc = Popen(['gpg', '--default-recipient-self', '--yes', '--output', passfile, '--encrypt'], shell=False, stdin=textproc.stdout).wait()
+        self.passfile = expanduser(self.options['passfile'])
 
-def ParsePassFile(passfile, contents = None):
-    if contents == None: contents = DecryptPassFile(passfile = passfile)
+        if not(isfile(self.passfile)): self.first = True
+        else: self.first = False
 
-    import re
-    parray = [s.strip() for s in contents.split('\n') if not(re.match(r'^\s*$', s))]
-    pdict = {}
-    ckey = ""
-    accountpatt = re.compile(r'^\[([^]]+)\]$')
-    fieldpatt = re.compile(r'^(.*?)\s*=\s*(.*)$')
-    for i in parray:
-        if accountpatt.match(i) != None:
-            ckey = accountpatt.match(i).group(1)
-            pdict[ckey] = {}
+        self.entries = None
+        if not(self.first):
+            self.entries = self.ParsePassFile(self.passfile)
+
+    def CreateGPGKey(self):
+        """Creates a gpg key for the user."""
+
+        from subprocess import call
+        print("Need to first create gpg key pair.")
+        print("Choose a secure passphrase -- this is going to be your 'master' password.")
+        print("Rerun program after key creation.\n")
+        print("WARNING: DO NOT pick a sign-only key type.\n")
+        print("-------------------------------------------------------------------------")
+        input("Press [ENTER] when ready.")
+        call('gpg --gen-key'.split(' '))
+
+    def HasGPGKey(self):
+        """Checks if the user has a gpg key pair."""
+
+        from os import stat
+        from os.path import expanduser,isfile,join
+
+        secring = join(expanduser('~'), '.gnupg', 'secring.gpg')
+        if not(isfile(secring)) or stat(secring).st_size == 0: return False
+        else: return True
+
+    def CopyDefaultConf(self, location, conf_locs):
+        """Attempts to copy the default configuration to the specified location."""
+
+        from os.path import expanduser,isfile
+        fexample = None
+        for p in conf_locs:
+            if isfile(p): 
+                fexample = p
+                break
+
+        if not(fexample):
+            raise IOError("Could not find default configuration file in any of the following locations: {0}".format(','.join(conf_locs)))
         else:
-            match = fieldpatt.match(i)
-            pdict[ckey][match.group(1)] = match.group(2)
+            from shutil import copyfile
+            copyfile(fexample, expanduser(location))
 
-    return pdict
+    def ReadConfigFile(self, filename, info = {}):
+        """When passed a filename, reads the config file for rpass information.
+        
+        Returns a dictionary of useful values."""
+        import configparser
+        from os.path import expanduser,isfile
 
-def GetAccountInfo(passfile, account, pinfo = None, strict = False):
-    if pinfo == None: pinfo = ParsePassFile(passfile = passfile)
+        if not(isfile(expanduser(filename))):
 
-    import re
-    accountpatt = ''
-    if strict:
-        accountpatt = re.compile("^{0}$".format(account))
-    else:
-        accountpatt = re.compile(account, re.I)
-    accountdict = {}
+            # Try to copy the default configuration
+            from sys import path
 
-    for ac in pinfo.keys():
-        if accountpatt.search(ac): accountdict[ac] = pinfo[ac]
+            paths = ["{0}/../share/rpass/", "/usr/share/rpass/", "/usr/local/share/rpass/", "{0}/"]
+            paths = [p.format(path[0]) + 'rpass.example.conf' for p in paths]
 
-    return accountdict
+            try:
+                self.CopyDefaultConf(expanduser(filename), paths)
+            except IOError as e:
+                info['fields'] = []
+                return (info, str(e))
 
-def CopyPass(account = '.', acinfo = None):
-    if acinfo == None: acinfo = GetAccountInfo(account)
-    from subprocess import Popen,PIPE
+        config = configparser.ConfigParser()
+        config.read(expanduser(filename))
 
-    for ac in sorted(acinfo.keys()):
-        if 'pass' in acinfo[ac]:
-            echoproc = Popen(['echo', acinfo[ac]['pass']], shell=False, stdout=PIPE)
-            copyproc = Popen(['xclip'], shell=False, stdin=echoproc.stdout)
-            return True
-    return False
+        if config.has_option('display', 'fields'): 
+            info['fields'] = [field.strip() for field in 
+                    config.get('display', 'fields').split(',') if field.strip()]
+            if len([f for f in info['fields'] if f.strip()]) == 0: info['fields'] = [None]
+        if config.has_option('display', 'color'):
+            if config.get('display', 'color').lower()[0] == 'y': info['color'] = True
+            else: info['color'] = False
 
-def CreatePassFile(pinfo):
-    contents = ""
-    ftemplate = "    {0} = {1}\n"
-    sorted_accounts = sorted(pinfo.keys())
-    for key in sorted_accounts:
-        contents += "[{0}]\n".format(key)
-        if "user" in pinfo[key]: contents += ftemplate.format("user", pinfo[key]["user"])
-        if "pass" in pinfo[key]: contents += ftemplate.format("pass", pinfo[key]["pass"])
-        for (field, value) in pinfo[key].items():
-            if field not in ["user", "pass"]: contents += ftemplate.format(field, value)
-        contents += "\n"
-    return contents.strip()
+        if config.has_option('general', 'passfile'):
+            from os.path import expanduser
+            info['passfile'] = expanduser(config.get('general', 'passfile'))
 
-def DeleteEntry(passfile, entry, pinfo = None):
-    if pinfo == None: pinfo = ParsePassFile(passfile = passfile)
-    if entry in pinfo: 
-        del(pinfo[entry])
-        EncryptPassFile(CreatePassFile(pinfo))
-        print("Deleted account {0}.".format(entry))
-    else:
-        raise NonexistentEntry
+        return (info, None)
+
+    def DecryptPassFile(self, passfile):
+         from os.path import isfile
+         if not isfile(passfile): raise IOError("Password file not found.")
+
+         from subprocess import Popen,PIPE
+
+         proclst = ['gpg', '--quiet', '--output', '-', '--decrypt', passfile]
+
+         if IsRunning('gpg-agent'): 
+             proclst.insert(1, '--no-tty')
+             proclst.insert(1, '--use-agent')
+
+         proc = Popen(proclst, stdout = PIPE, stderr = PIPE)
+     
+         retstr, errstr = tuple(str(s, encoding = "utf-8") for s in proc.communicate())
+         if errstr.find("gpg: no valid OpenPGP data found.") != -1: raise UnencryptedFile
+         elif (errstr.find("gpg: decryption failed: secret key not available") != -1) or (errstr.find("gpg: decrypt_message failed: eof") != -1): raise InvalidEncryptionKey
+
+         return retstr.strip()
+
+    def EncryptPassFile(self, passfile, contents):
+        from subprocess import Popen,PIPE
+        textproc = Popen(['echo', contents], shell=False, stdout=PIPE)
+        encproc = Popen(['gpg', '--default-recipient-self', '--yes', '--output', passfile, '--encrypt'], shell=False, stdin=textproc.stdout).wait()
+
+    def Write(self):
+        self.EncryptPassFile(self.passfile, self.CreatePassFile(self.entries))
+
+    def ParsePassFile(self, passfile, contents = None):
+        if contents == None: contents = self.DecryptPassFile(passfile = passfile)
+
+        import re
+        parray = [s.strip() for s in contents.split('\n') if not(re.match(r'^\s*$', s))]
+        pdict = {}
+        ckey = ""
+        accountpatt = re.compile(r'^\[([^]]+)\]$')
+        fieldpatt = re.compile(r'^(.*?)\s*=\s*(.*)$')
+        for i in parray:
+            if accountpatt.match(i) != None:
+                ckey = accountpatt.match(i).group(1)
+                pdict[ckey] = {}
+            else:
+                match = fieldpatt.match(i)
+                pdict[ckey][match.group(1)] = match.group(2)
+
+        return pdict
+
+    def GetAccountInfo(self, account, strict = False):
+        if self.entries == None:
+            return {}
+
+        import re
+        accountpatt = ''
+        if strict:
+            accountpatt = re.compile("^{0}$".format(account))
+        else:
+            accountpatt = re.compile(account, re.I)
+        accountdict = {}
+
+        for ac in self.entries.keys():
+            if accountpatt.search(ac): accountdict[ac] = self.entries[ac]
+
+        return accountdict
+
+    def CopyPass(self, acinfo = None, account = '.'):
+        if acinfo == None: return False
+        from subprocess import Popen,PIPE
+
+        for ac in sorted(acinfo.keys()):
+            if 'pass' in acinfo[ac]:
+                echoproc = Popen(['echo', acinfo[ac]['pass']], shell=False, stdout=PIPE)
+                copyproc = Popen(['xclip'], shell=False, stdin=echoproc.stdout)
+                return True
+        return False
+
+    def CreatePassFile(self, pinfo):
+        contents = ""
+        ftemplate = "    {0} = {1}\n"
+        sorted_accounts = sorted(pinfo.keys())
+        for key in sorted_accounts:
+            contents += "[{0}]\n".format(key)
+            if "user" in pinfo[key]: contents += ftemplate.format("user", pinfo[key]["user"])
+            if "pass" in pinfo[key]: contents += ftemplate.format("pass", pinfo[key]["pass"])
+            for (field, value) in pinfo[key].items():
+                if field not in ["user", "pass"]: contents += ftemplate.format(field, value)
+            contents += "\n"
+        return contents.strip()
+
+    def DeleteEntry(self, entry):
+        if entry in self.entries: 
+            del(self.entries[entry])
+        else:
+            raise NonexistentEntry
+
+    def AddEntry(self, name, entry):
+        """Adds an entry to the account."""
+
+        if type(self.entries) == dict:
+            if name in self.entries: raise ExistingEntry
+        else:
+            self.entries = {}
+
+        self.entries[name] = entry

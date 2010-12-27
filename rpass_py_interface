@@ -44,14 +44,10 @@ def PrintAccountInfo(acinfo, keys, color, pfull = False, batch = False):
                     if k not in ['user', 'pass']:
                         print("\t{0}: {1}".format(k, v))
 
-def AddEntry(passfile, acname = None, pinfo = None, nfile = False):
-    from rpass import ParsePassFile,ExistingEntry
-
-    if pinfo == None and not(nfile): pinfo = ParsePassFile(passfile = passfile)
+def CreateEntry(acname = None):
     if not(acname): acname = input("Account name: ")
-    if pinfo and ((acname) in pinfo.keys()): raise ExistingEntry
-    if type(pinfo) != dict: pinfo = {}
-    pinfo[acname] = {}
+
+    acinfo = {}
 
     usr = input("{0}: User - leave blank to remove field: ".format(acname))
 
@@ -59,9 +55,9 @@ def AddEntry(passfile, acname = None, pinfo = None, nfile = False):
     pwrd = gp("{0}: Password - leave blank to remove field (typed letters do not appear): ".format(acname))
 
     if usr.strip():
-        pinfo[acname]['user'] = usr
+        acinfo['user'] = usr
     if pwrd.strip():
-        pinfo[acname]['pass'] = pwrd
+        acinfo['pass'] = pwrd
 
     response = input("Would you like to add additional fields to the entry? [N/y] ")
     if response != '' and response.lower()[0] == 'y':
@@ -72,94 +68,11 @@ def AddEntry(passfile, acname = None, pinfo = None, nfile = False):
             if field in ["password", "p", "pass"]:
                 from getpass import getpass as gp
                 field = "pass"
-                pinfo[acname][field] = gp("{0}: ".format(field))
+                acinfo[field] = gp("{0}: ".format(field))
             else:
-                pinfo[acname][field] = input("{0}: ".format(field))
+                acinfo[field] = input("{0}: ".format(field))
             field = input("{0}: Field: ".format(acname))
-    return pinfo
-
-def ReadConfigFile(filename, info = {}):
-    """When passed a filename, reads the config file for rpass information.
-    
-    Returns a dictionary of useful values."""
-    import configparser
-    from os.path import expanduser,isfile
-
-    if not(isfile(expanduser(filename))):
-        from sys import path
-
-        paths = ["{0}/../share/rpass/", "/usr/share/rpass/", "/usr/local/share/rpass/", "{0}/"]
-        paths = [p + 'rpass.example.conf' for p in paths]
-
-        fexample = None
-        for p in paths:
-            if isfile(p): 
-                fexample = p
-                break
-
-        if not(fexample):
-            print("Could not find default config rpass.example.conf.")
-            info['fields'] = []
-            return info
-
-        else:
-            from shutil import copyfile
-            try:
-                copyfile(fexample, expanduser(filename))
-                print("Copied example config (default values) to {0}.".format(filename))
-                print("----------------------------------------------\n")
-            except IOError as e:
-                print("Could not copy default config to {0}.".format(filename))
-                print(e)
-                info['fields'] = []
-                return info
-
-    config = configparser.ConfigParser()
-    config.read(expanduser(filename))
-
-    if config.has_option('display', 'fields'): 
-        info['fields'] = [field.strip() for field in 
-                config.get('display', 'fields').split(',') if field.strip()]
-        if len([f for f in info['fields'] if f.strip()]) == 0: info['fields'] = [None]
-    if config.has_option('display', 'color'):
-        if config.get('display', 'color').lower()[0] == 'y': info['color'] = True
-        else: info['color'] = False
-
-    if config.has_option('general', 'passfile'):
-        from os.path import expanduser
-        info['passfile'] = expanduser(config.get('general', 'passfile'))
-
-    return info
-
-def HasGPGKey():
-    """Checks if the user has a gpg key pair. If not creates it."""
-    from os import stat
-    from os.path import expanduser,isfile,join
-
-    secring = join(expanduser('~'), '.gnupg', 'secring.gpg')
-    if not(isfile(secring)) or stat(secring).st_size == 0: return False
-    else: return True
-
-def CreateGPGKey():
-    """Creates a gpg key for the user."""
-    from subprocess import call
-    print("Need to first create gpg key pair.")
-    print("Choose a secure passphrase -- this is going to be your 'master' password.")
-    print("Rerun program after key creation.\n")
-    print("WARNING: DO NOT pick a sign-only key type.\n")
-    print("-------------------------------------------------------------------------")
-    input("Press [ENTER] when ready.")
-    call('gpg --gen-key'.split(' '))
-
-def ConstructFields(primary, secondary, default = []):
-    """Constructs a list of fields, primary overrides secondary overrides default."""
-    
-    if primary:
-        return primary
-    elif secondary:
-        return secondary
-    else:
-        return default
+    return (acname, acinfo)
 
 def GetOptions():
     """Gets options from user through configuration file and commandline."""
@@ -221,13 +134,9 @@ def GetOptions():
 
     (options, args) = parser.parse_args()
 
-    info = {}
-    if options.conf_file:
-        info = ReadConfigFile(options.conf_file)
-    else:
-        info = ReadConfigFile('~/.rpass.conf')
-
-    fops = {k:v for (k, v) in info.items()}
+    fops = {}
+    if options.conf_file: fops['conf_file'] = options.conf_file
+    else: fops['conf_file'] = '~/.rpass.conf'
     fops['batch'] = options.batch_mode
     if options.xclip > 0: fops['copy'] = True
     if options.no_xclip > 0: fops['copy'] = False
@@ -237,96 +146,95 @@ def GetOptions():
     fops['del_entry'] = options.delete_entry
     if options.color > 0: fops['color'] = True
     if options.no_color > 0: fops['color'] = False
-    if 'color' not in fops: fops['color'] = False
 
     if not(options.print_keys): fops['fields'] = []
     else: fops['fields'] = [f.strip() for f in options.print_keys.split(',') if f.strip()]
     if options.print_users: fops['fields'].append('user')
     if options.print_pass: fops['fields'].extend(["pass"])
 
-    # Commandline overrides config file
-    fops['fields'] = ConstructFields(primary = fops['fields'], secondary = info['fields'])
-    if fops['fields'] == [None]: fops['fields'] = []
-
-    if options.pass_file: fops['passfile'] = options.pass_file
-    if 'passfile' not in fops: fops['passfile'] = '~/.passwords.gpg'
-
-    from os.path import expanduser
-    fops['passfile'] = expanduser(fops['passfile'])
+    if options.pass_file: 
+        from os.path import expanduser
+        fops['passfile'] = expanduser(options.pass_file)
+    if 'passfile' not in fops: fops['passfile'] = None
 
     return (fops, args)
 
 if __name__=="__main__":
-    import rpass
-
-    if not(HasGPGKey()):
-        CreateGPGKey()
-        exit()
-
-    if not(rpass.IsRunning('gpg-agent')):
-        print("gpg-agent is not running. This is not recommended. Continuing anyway...")
+    from rpass import rpass
+    from rpass import InvalidEncryptionKey,ExistingEntry
 
     (options, args) = GetOptions()
 
+    account = rpass(conf_file = options['conf_file'], passfile = options['passfile'], executable = True)
+
+    if 'color' not in options:
+        if 'color' in account.options:
+            options['color'] = account.options['color']
+        else: options['color'] = False
+
+    if not(options['fields']):
+        if 'fields' in account.options and account.options['fields'] != [None]:
+            options['fields'] = account.options['fields']
+        else: options['fields'] = []
+
+    if account.first:
+        response = input("No password file at {0} found. Would you like to create it (note: please don't create this file manually)? [Y/n] ".format(account.passfile))
+
+        if response != '' and response.lower()[0] == 'n':
+            print("No password file created...Exiting.")
+            exit()
+
+        if options['new_entry'] and len(args) > 0:
+            for arg in args: account.AddEntry(*CreateEntry(arg))
+        else: account.AddEntry(*CreateEntry())
+
+        account.Write()
+        exit()
+
     if options['login']:
         try:
-            rpass.DecryptPassFile(passfile = options['passfile'])
+            account.DecryptPassFile()
             exit(0)
         except rpass.InvalidEncryptionKey:
             print("Login failed (bad password or bad keyfile).")
             exit(1)
 
     elif options['new_entry']:
-        pinfo = None
-
         try:
             if len(args) > 0:
-                for arg in args: pinfo = AddEntry(passfile = options['passfile'], acname = arg, pinfo = pinfo)
-            else: pinfo = AddEntry(passfile = options['passfile'], pinfo = pinfo)
-        except IOError:
-            response = input("No password file found. Shall I create one? [Y/n] ")
-            if response == '' or response.lower()[0] != 'n':
-                FILE = open(options['passfile'], 'w'); FILE.close()
-                if len(args) > 0:
-                    pinfo = AddEntry(passfile = options['passfile'], acname = args[0], pinfo = pinfo, nfile = True)
-                    for arg in args[1:]: pinfo = AddEntry(passfile = options['passfile'], acname = arg, pinfo = pinfo, nfile = False)
-                else: pinfo = AddEntry(passfile = options['passfile'], pinfo = pinfo, nfile = True)
+                for arg in args: account.AddEntry(*CreateEntry(arg))
+            else: account.AddEntry(*CreateEntry())
+            account.Write()
+        except rpass.ExistingEntry:
+            print("Entry exists...aborting addition.")
 
-        if pinfo: rpass.EncryptPassFile(passfile = options['passfile'], contents = rpass.CreatePassFile(pinfo))
         exit()
 
     elif options['del_entry']:
         try:
             if len(args) > 0:
-                for arg in args: rpass.DeleteEntry(passfile = options['passfile'], entry = arg)
+                for arg in args: account.DeleteEntry(entry = arg)
+                account.Write()
             else: print ("Please specify entry or entries to delete.")
         except rpass.NonExistentEntry:
-            print("One of your entries does not exist. Deleting operation halted.")
+            print("One of your entries does not exist. Deleting operation aborted.")
         exit()
 
     else:
         acinfo = {}
         pfull = False
 
-        try:
-            if len(args) > 0:
-
-                pfull = True
-
-                for arg in args: 
-                    acinfo.update(rpass.GetAccountInfo(passfile = options['passfile'], account = arg, strict = options['batch']))
-
-                # Copy passwords...
-                if not(options['batch']) and options['copy']:
-                    try:
-                        rpass.CopyPass(acinfo=acinfo)
-                    except OSError:
-                        print("'xclip' not found. Please install xclip to automatically copy first matched password to clipboard (avoid printing passwords).")
-                        print("To see passwords, run rpass with the --passwords option.\n")
-
-            else:
-                acinfo = rpass.ParsePassFile(passfile = options['passfile'])
-
-            PrintAccountInfo(acinfo=acinfo, pfull = pfull, color = options['color'], keys = options['fields'], batch = options['batch'])
-        except IOError:
-            print("No password file found...create it with 'rpass -a'")
+        if len(args) > 0:
+            pfull = True
+            for arg in args: 
+                acinfo.update(account.GetAccountInfo(account = arg, strict = options['batch']))
+            # Copy passwords...
+            if not(options['batch']) and options['copy']:
+                try:
+                    account.CopyPass(acinfo=acinfo)
+                except OSError:
+                    print("'xclip' not found. Please install xclip to automatically copy first matched password to clipboard (avoid printing passwords).")
+                    print("To see passwords, run rpass with the --passwords option.\n")
+        else:
+            acinfo = account.entries
+        PrintAccountInfo(acinfo=acinfo, pfull = pfull, color = options['color'], keys = options['fields'], batch = options['batch'])
