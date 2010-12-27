@@ -274,9 +274,12 @@ if __name__=="__main__":
         exit()
 
     elif options['del_entry']:
-        if len(args) > 0:
-            for arg in args: rpass.DeleteEntry(passfile = options['passfile'], entry = arg)
-        else: print ("Please specify entry or entries to delete.")
+        try:
+            if len(args) > 0:
+                for arg in args: rpass.DeleteEntry(passfile = options['passfile'], entry = arg)
+            else: print ("Please specify entry or entries to delete.")
+        except rpass.NonExistentEntry:
+            print("One of your entries does not exist. Deleting operation halted.")
         exit()
 
     else:
