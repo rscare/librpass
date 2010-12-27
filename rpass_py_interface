@@ -106,11 +106,11 @@ if __name__=="__main__":
 
     parser.add_option("-u", "--users", dest="print_users",
             action="store_true", default=False,
-            help="Option to print usernames.")
+            help="Print usernames to stdout. Works in batch or regular mode.")
 
     parser.add_option("--passwords", dest="print_pass",
             action="store_true", default=False,
-            help="Print passwords to stdout.")
+            help="Print passwords to stdout. Works in batch or regular mode.")
 
     parser.add_option("-n", "--no-copy", dest="xclip",
             action="store_false", default=True,
@@ -121,19 +121,22 @@ if __name__=="__main__":
             help="Just login, don't show anything.")
 
     parser.add_option("-a", "--add-entry", dest="new_entry",
-            action="store_true", default=False)
+            action="store_true", default=False,
+            help = "Add account(s). Optionally list new account names on the commandline.")
 
     parser.add_option("-d", "--delete-entry", dest="delete_entry",
-            action = "store")
+            action = "store",
+            help = "Specify an account to delete. Must match exactly.")
 
     parser.add_option("-k", "--keys", dest="print_keys",
-            action = "store", type = "string")
+            action = "store", type = "string",
+            help = "Specify, in a comma-separated list, which fields to print in batch mode: i.e. user,pass")
+
+    parser.add_option("-C", "--config-file", dest="conf_file",
+            action = "store", type = "string",
+            help = "Specify a configuration file other than the default (.rpass.conf)")
 
     (options, args) = parser.parse_args()
-
-    acinfo = {}
-    pfull = False
-    keys = []
 
     if options.login:
         try:
@@ -166,6 +169,10 @@ if __name__=="__main__":
         DeleteEntry(options.delete_entry); exit()
 
     else:
+        acinfo = {}
+        pfull = False
+        keys = []
+
         try:
             if len(args) > 0:
                 pfull = True
