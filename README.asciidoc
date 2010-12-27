@@ -12,7 +12,7 @@ SYNOPSIS
 
 *rpass* -a ['NEW ACCOUNT NAMES' ...]
 
-*rpass* -d 'ACCOUNT NAME'
+*rpass* -d 'ACCOUNT NAMES'
 
 *rpass* ['OPTIONS'] 'PATTERNS' ...
 
@@ -45,36 +45,50 @@ Run rpass once to set up *gpg* (generate keys) if this has not been done already
 USAGE
 -----
 
+NOTE: See `rpass -h` for a complete summary of command-line options.
+
 WARNING: It is highly recommended to have *xclip* installed so that
 passwords never have to be written to stdout.
 
-NOTE: Passwords are never printed unless stated explicitly (see `rpass -h`)
+NOTE: Passwords and usernames are never printed unless stated explicitly (see `rpass -h`)
+
+CONFIGURATION
+~~~~~~~~~~~~~
+
+Upon installation a heavily commented configuration file is placed in the home
+directory at ~/.rpass.conf. If you delete or change this configuration file
+and want to see the comments/documentation again, there is one located in
+/usr/share/rpass/rpass.example.conf.
+
+In this configuration file you can set up most of the relevant defaults to *rpass*.
 
 VIEWING
 ~~~~~~~
 
-The command *rpass* on its own will list account names and corresponding fields
-in the following format:
+NOTE: These are the defaults, you can change them easily in the configuration file
+
+The command *rpass* on its own will list account names:
 
 ----
 # rpass
-Account Name 1 - username1
-Account Name 2 - username2
-Account Name 3 <---------- There are no required fields in rpass apart from account name
+Account Name 1
+Account Name 2
+Account Name 3
 ...
 ----
 
 NOTE: No password is copied if *rpass* is run without an argument.
 
 The command *rpass* followed by any text will print any accounts that contain
-the text in the account name, case-insensitive (regular expressions allowed) in
-the following format:
+the text in the account name (search is case-insensitive with regular
+expressions allowed) with all optional fields shown, and copy the password of
+the first matching account to the clipboard:
 
 Simple query:
 
 ----
 # rpass 1
-Account Name 1 - username1
+Account Name 1
 ...
 ----
 
@@ -82,14 +96,53 @@ Regular expressions:
 
 ----
 # rpass "name (1|3)$"
-Account Name 1 - username1
+Account Name 1
 Account Name 3
     optional_field1: optional_value1
 ...
 ----
 
-Additionally, the password of the first matching account will be copied to the
-X-clipboard if *xclip* is in the user's $PATH.
+SHOWING INFORMATION
+~~~~~~~~~~~~~~~~~~~
+
+NOTE: Any fields can be shown in the default view (the most potentially useful
+being username) by editing the configuration file (~/.rpass.conf).
+
+Username:
+
+----
+# rpass --users [Account searches]
+----
+
+or 
+
+----
+# rpass -u [Account searches]
+----
+
+Password:
+
+----
+# rpass --passwords [Account searches]
+----
+
+or 
+
+----
+# rpass -p [Account searches]
+----
+
+Custom fields:
+
+----
+# rpass --keys 'custom1,custom2' [Account searches]
+----
+
+You can combine these in any way:
+
+----
+# rpass -puk 'custom1' [Account searches]
+----
 
 EDITING
 ~~~~~~~
@@ -136,11 +189,20 @@ Get the unformatted password from account named "AC ONE":
 secretpass123
 ----
 
+Get the unformatted username and password from account named "AC ONE":
+
+----
+# rpass --batch --users --password "AC ONE"
+username
+secretpass123
+----
+
 or
 
 ----
-# rpass --batch --keys 'pass' "AC ONE"
-secretpass123
+# rpass --bpu "AC ONE"
+username
+secretpass 123
 ----
 
 Get the unformatted username from account named "AC ONE":
@@ -153,7 +215,15 @@ acusername
 Get the unformatted custom field "custom1" and the username from account named "AC ONE":
 
 ----
-# rpass --batch --keys 'custom1,user' "AC ONE"
+# rpass --batch --users --keys 'custom1' "AC ONE"
+custom1value
+acusername
+----
+
+or
+
+----
+# rpass -buk 'custom1' "AC ONE"
 custom1value
 acusername
 ----
