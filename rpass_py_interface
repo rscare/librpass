@@ -85,8 +85,32 @@ def ReadConfigFile(filename, info = {}):
     from os.path import expanduser,isfile
 
     if not(isfile(expanduser(filename))):
-        info['fields'] = []
-        return info
+        from sys import path
+
+        paths = ["{0}/../share/rpass/", "/usr/share/rpass/", "/usr/local/share/rpass/"]
+        paths = [p + 'rpass.example.conf' for p in paths]
+
+        fexample = None
+        for p in paths:
+            if isfile(p): 
+                fexample = p
+                break
+
+        if not(fexample):
+            print("Could not find default config rpass.example.conf.")
+            info['fields'] = []
+            return info
+
+        else:
+            from shutil import copyfile
+            try:
+                copyfile(fexample, filename)
+                print("Copied example config (default values) to {0}.".format(filename))
+            except IOError as e:
+                print("Could not copy default config to {0}.".format(filename))
+                print(e)
+                info['fields'] = []
+                return info
 
     config = configparser.ConfigParser()
     config.read(expanduser(filename))
