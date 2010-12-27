@@ -147,7 +147,7 @@ def GetOptions():
 
     parser.add_option("-u", "--users", dest="print_users",
             action="store_true", default=False,
-            help="Add users to printed fields [default].")
+            help="Add users to printed fields.")
 
     parser.add_option("-p", "--passwords", dest="print_pass",
             action="store_true", default=False,
