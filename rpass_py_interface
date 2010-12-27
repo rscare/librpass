@@ -106,6 +106,7 @@ def ReadConfigFile(filename, info = {}):
             try:
                 copyfile(fexample, expanduser(filename))
                 print("Copied example config (default values) to {0}.".format(filename))
+                print("----------------------------------------------\n")
             except IOError as e:
                 print("Could not copy default config to {0}.".format(filename))
                 print(e)
