@@ -15,10 +15,16 @@ else
     echo "This could mean gpg-agent was started improperly -- rpass may not work."
 fi
 
-if [ ! -t 0 ] || [ ! -t 1 ]; then
-    rpass_py_interface --no-color "$@"
+rpass_command="rpass_py_interface"
+
+[ ! -t 1 ] && rpass_command=$rpass_command" --no-color"
+
+if [ ! -t 0 ]; then
+    while read line; do
+        $rpass_command "$@" "$line"
+    done
 else
-    rpass_py_interface "$@"
+    $rpass_command "$@"
 fi
 
 # vim: filetype=sh :
