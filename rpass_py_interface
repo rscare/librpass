@@ -43,8 +43,8 @@ def PrintAccountInfo(acinfo, keys, color, pfull = False, batch = False):
                     if k not in ['user', 'pass']:
                         print("\t{0}: {1}".format(k, v))
 
-def AddEntry(acname = None, pinfo = None, passfile = None, nfile = False):
-    from rpass import ParsePassFile,ExistingEntry,EncryptPassFile
+def AddEntry(passfile, acname = None, pinfo = None, nfile = False):
+    from rpass import ParsePassFile,ExistingEntry
 
     if pinfo == None and not(nfile): pinfo = ParsePassFile(passfile = passfile)
     if not(acname): acname = input("Account name: ")
@@ -217,7 +217,7 @@ def GetOptions():
     return (fops, args)
 
 if __name__=="__main__":
-    from rpass import *
+    import rpass
     from os.path import expanduser,isfile
     from os.path import join as path_join
     from os import stat
@@ -227,16 +227,16 @@ if __name__=="__main__":
         CreateGPGKey()
         exit()
 
-    if not(IsRunning('gpg-agent')):
+    if not(rpass.IsRunning('gpg-agent')):
         print("gpg-agent is not running. This is not recommended. Continuing anyway...")
 
     (options, args) = GetOptions()
 
     if options['login']:
         try:
-            DecryptPassFile()
+            rpass.DecryptPassFile(passfile = options['passfile'])
             exit(0)
-        except InvalidEncryptionKey:
+        except rpass.InvalidEncryptionKey:
             print("Login failed (bad password or bad keyfile).")
             exit(1)
 
@@ -245,23 +245,23 @@ if __name__=="__main__":
 
         try:
             if len(args) > 0:
-                for arg in args: pinfo = AddEntry(acname = arg, pinfo = pinfo)
-            else: pinfo = AddEntry(pinfo = pinfo)
+                for arg in args: pinfo = AddEntry(passfile = options['passfile'], acname = arg, pinfo = pinfo)
+            else: pinfo = AddEntry(passfile = options['passfile'], pinfo = pinfo)
         except IOError:
             response = input("No password file found. Shall I create one? [Y/n] ")
             if response == '' or response.lower()[0] != 'n':
-                FILE = open(path_join(expanduser('~'), '.passwords.gpg'), 'w'); FILE.close()
+                FILE = open(options['passfile'], 'w'); FILE.close()
                 if len(args) > 0:
-                    pinfo = AddEntry(acname = args[0], pinfo = pinfo, nfile = True)
-                    for arg in args[1:]: pinfo = AddEntry(acname = arg, pinfo = pinfo, nfile = False)
-                else: pinfo = AddEntry(pinfo = pinfo, nfile = True)
+                    pinfo = AddEntry(passfile = options['passfile'], acname = args[0], pinfo = pinfo, nfile = True)
+                    for arg in args[1:]: pinfo = AddEntry(passfile = options['passfile'], acname = arg, pinfo = pinfo, nfile = False)
+                else: pinfo = AddEntry(passfile = options['passfile'], pinfo = pinfo, nfile = True)
 
-        if pinfo: EncryptPassFile(CreatePassFile(pinfo))
+        if pinfo: rpass.EncryptPassFile(passfile = options['passfile'], contents = rpass.CreatePassFile(pinfo))
         exit()
 
     elif options['del_entry']:
         if len(args) > 0:
-            for arg in args: DeleteEntry(arg)
+            for arg in args: rpass.DeleteEntry(passfile = options['passfile'], entry = arg)
         else: print ("Please specify entry or entries to delete.")
         exit()
 
@@ -275,18 +275,18 @@ if __name__=="__main__":
                 pfull = True
 
                 for arg in args: 
-                    acinfo.update(GetAccountInfo(arg, strict = options['batch']))
+                    acinfo.update(rpass.GetAccountInfo(passfile = options['passfile'], account = arg, strict = options['batch']))
 
                 # Copy passwords...
                 if not(options['batch']) and options['copy']:
                     try:
-                        CopyPass(acinfo=acinfo)
+                        rpass.CopyPass(acinfo=acinfo)
                     except OSError:
                         print("'xclip' not found. Please install xclip to automatically copy first matched password to clipboard (avoid printing passwords).")
                         print("To see passwords, run rpass with the --passwords option.\n")
 
             else:
-                acinfo = ParsePassFile()
+                acinfo = rpass.ParsePassFile(passfile = options['passfile'])
 
             PrintAccountInfo(acinfo=acinfo, pfull = pfull, color = options['color'], keys = options['fields'], batch = options['batch'])
         except IOError:

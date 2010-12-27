@@ -26,11 +26,7 @@ def IsRunning(procname):
     if procname in plist: return True
     else: return False
 
-def DecryptPassFile(passfile = None):
-     if passfile == None:
-         from os.path import expanduser,join
-         passfile = join(expanduser('~'),".passwords.gpg")
- 
+def DecryptPassFile(passfile):
      from os.path import isfile
      if not isfile(passfile): raise IOError
 
@@ -50,17 +46,13 @@ def DecryptPassFile(passfile = None):
 
      return retstr.strip()
 
-def EncryptPassFile(contents, passfile = None):
-    if passfile == None:
-        from os.path import expanduser,join
-        passfile = join(expanduser('~'),".passwords.gpg")
-
+def EncryptPassFile(passfile, contents):
     from os.path import exists
     from subprocess import Popen,PIPE
     textproc = Popen(['echo', contents], shell=False, stdout=PIPE)
     encproc = Popen(['gpg', '--default-recipient-self', '--yes', '--output', passfile, '--encrypt'], shell=False, stdin=textproc.stdout).wait()
 
-def ParsePassFile(contents = None, passfile = None):
+def ParsePassFile(passfile, contents = None):
     if contents == None: contents = DecryptPassFile(passfile = passfile)
 
     import re
@@ -79,8 +71,8 @@ def ParsePassFile(contents = None, passfile = None):
 
     return pdict
 
-def GetAccountInfo(account, pinfo = None, strict = False):
-    if pinfo == None: pinfo = ParsePassFile()
+def GetAccountInfo(passfile, account, pinfo = None, strict = False):
+    if pinfo == None: pinfo = ParsePassFile(passfile = passfile)
 
     import re
     accountpatt = ''
@@ -119,7 +111,7 @@ def CreatePassFile(pinfo):
         contents += "\n"
     return contents.strip()
 
-def DeleteEntry(entry, pinfo = None, passfile = None):
+def DeleteEntry(passfile, entry, pinfo = None):
     if pinfo == None: pinfo = ParsePassFile(passfile = passfile)
     if entry in pinfo: 
         del(pinfo[entry])
