@@ -84,7 +84,9 @@ def ReadConfigFile(filename, info = {}):
     import configparser
     from os.path import expanduser,isfile
 
-    if not(isfile(expanduser(filename))): return info
+    if not(isfile(expanduser(filename))):
+        info['fields'] = []
+        return info
 
     config = configparser.ConfigParser()
     config.read(expanduser(filename))
@@ -92,6 +94,7 @@ def ReadConfigFile(filename, info = {}):
     if config.has_option('display', 'fields'): 
         info['fields'] = [field.strip() for field in 
                 config.get('display', 'fields').split(',') if field.strip()]
+        if len([f for f in info['fields'] if f.strip()]) == 0: info['fields'] = [None]
     if config.has_option('display', 'color'):
         if config.get('display', 'color').lower()[0] == 'y': info['color'] = True
         else: info['color'] = False
@@ -174,6 +177,10 @@ def GetOptions():
             action = "store", type = "string",
             help = "Specify, in a comma-separated list (no spaces), which fields to print: i.e., custom1,custom2.\nUse --users and --passwords for non-custom fields.")
 
+    parser.add_option('-f', '--password-file', dest = 'pass_file',
+            action = 'store', type = 'string',
+            help = "Specify a password file other than the default [.passwords.gpg].")
+
     parser.add_option("-C", "--config-file", dest="conf_file",
             action = "store", type = "string",
             help = "Specify a configuration file other than the default [.rpass.conf].")
@@ -194,7 +201,7 @@ def GetOptions():
     else:
         info = ReadConfigFile('~/.rpass.conf')
 
-    fops = info
+    fops = {k:v for (k, v) in info.items()}
     fops['batch'] = options.batch_mode
     if options.xclip > 0: fops['copy'] = True
     if options.no_xclip > 0: fops['copy'] = False
@@ -213,6 +220,13 @@ def GetOptions():
 
     # Commandline overrides config file
     fops['fields'] = ConstructFields(primary = fops['fields'], secondary = info['fields'])
+    if fops['fields'] == [None]: fops['fields'] = []
+
+    if options.pass_file: fops['passfile'] = options.pass_file
+    if 'passfile' not in fops: fops['passfile'] = '~/.passwords.gpg'
+
+    from os.path import expanduser
+    fops['passfile'] = expanduser(fops['passfile'])
 
     return (fops, args)
 
