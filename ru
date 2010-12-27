@@ -1,1 +1,1 @@
-rpass -bu "$(rpass|dmenu -i)"|xclip -i
+rpass -bu "$(rpass|dmenu -i -p 'Account name: ')"|xclip -i

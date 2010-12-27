@@ -1,1 +1,1 @@
-rpass "$(rpass|dmenu -i)"
+rpass "$(rpass|dmenu -i -p 'Account name: ')"
