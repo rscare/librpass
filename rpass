@@ -10,6 +10,9 @@ if [ -f ${HOME}/.gpg-agent-info ]; then
     export GPG_AGENT_INFO
     export SSH_AUTH_SOCK
     export SSH_AGENT_PID
+else
+    echo "No agent info file found!"
+    echo "This could mean gpg-agent was started improperly -- rpass may not work."
 fi
 
 rpass_py_interface "$@"
