@@ -16,6 +16,10 @@ SYNOPSIS
 
 *rpass* ['OPTIONS'] 'PATTERNS' ...
 
+*rp*
+
+*ru*
+
 DESCRIPTION
 -----------
 
@@ -30,6 +34,7 @@ DEPENDENCIES
 * In order for copying to the X-clipboard to work, *xclip* must be in the
   user's $PATH.
 * *gpg-agent* for tool to be used to full potential.
+* *dmenu* for gui tools (*rp* and *ru*)
 
 SETUP
 -----
@@ -142,6 +147,17 @@ You can combine these in any way:
 
 ----
 # rpass -puk 'custom1' [Account searches]
+----
+
+PIPING
+~~~~~~
+
+rpass attempts intelligent piping support by removing color formatting when it is being piped.
+
+An example is the included utility *rp*. It used dmenu to select an rpass entry. It's code is the following:
+
+----
+# rpass "$(rpass|dmenu -i)"
 ----
 
 EDITING

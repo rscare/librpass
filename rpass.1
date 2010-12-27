@@ -36,6 +36,10 @@ rpass \- secure (i\&.e\&. encrypted), simple, command\-line password manager
 \fBrpass\fR \-d \fIACCOUNT NAMES\fR
 .sp
 \fBrpass\fR [\fIOPTIONS\fR] \fIPATTERNS\fR \&...
+.sp
+\fBrp\fR
+.sp
+\fBru\fR
 .SH "DESCRIPTION"
 .sp
 \fBrpass\fR is a module and related executable that are meant to make secure password management through the commandline and almost all programs that use passwords accessible, convenient, and easy\&.
@@ -78,6 +82,21 @@ must be in the user\(cqs $PATH\&.
 
 \fBgpg\-agent\fR
 for tool to be used to full potential\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+
+\fBdmenu\fR
+for gui tools (\fBrp\fR
+and
+\fBru\fR)
 .RE
 .SH "SETUP"
 .sp
@@ -315,6 +334,21 @@ You can combine these in any way:
 .\}
 .nf
 # rpass \-puk \*(Aqcustom1\*(Aq [Account searches]
+.fi
+.if n \{\
+.RE
+.\}
+.SS "PIPING"
+.sp
+rpass attempts intelligent piping support by removing color formatting when it is being piped\&.
+.sp
+An example is the included utility \fBrp\fR\&. It used dmenu to select an rpass entry\&. It\(cqs code is the following:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+# rpass "$(rpass|dmenu \-i)"
 .fi
 .if n \{\
 .RE
