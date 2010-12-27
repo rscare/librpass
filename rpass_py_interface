@@ -125,7 +125,7 @@ def CreateGPGKey():
     input("Press [ENTER] when ready.")
     call('gpg --gen-key'.split(' '))
 
-def ConstructFields(primary, secondary, default = ['user']):
+def ConstructFields(primary, secondary, default = []):
     """Constructs a list of fields, primary overrides secondary overrides default."""
     
     if primary:
