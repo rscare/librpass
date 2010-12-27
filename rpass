@@ -5,16 +5,6 @@ if [ ! "$(pgrep -u $UID gpg-agent)" ]; then
     echo "WARNING: If you only use gpg-agent for rpass, don't worry about this. If not (i.e. you also encrypt/sign files), start gpg-agent as per its manpage on login (i.e. in .xsession or in .profile)."
 fi
 
-if [ -f ${HOME}/.gpg-agent-info ]; then
-    . ${HOME}/.gpg-agent-info
-    export GPG_AGENT_INFO
-    export SSH_AUTH_SOCK
-    export SSH_AGENT_PID
-else
-    echo "No agent info file found!"
-    echo "This could mean gpg-agent was started improperly -- rpass may not work."
-fi
-
 rpass_command="rpass_py_interface"
 
 [ ! -t 1 ] && rpass_command=$rpass_command" --no-color"

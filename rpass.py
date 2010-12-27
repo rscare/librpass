@@ -40,8 +40,6 @@ class rpass:
             self.CreateGPGKey()
 
         self.executable = executable
-        if not(self.executable) and not(IsRunning('gpg-agent')):
-            raise RuntimeError("No gpg-agent running when rpass is being used as a plugin.")
         self.conf_file = conf_file
         (self.options, self.copyerror) = self.ReadConfigFile(filename = self.conf_file)
 
@@ -134,24 +132,37 @@ class rpass:
         return (info, None)
 
     def DecryptPassFile(self, passfile):
-         from os.path import isfile
-         if not isfile(passfile): raise IOError("Password file not found.")
+        from os.path import isfile,expanduser
+        if not isfile(passfile): raise IOError("Password file not found.")
 
-         from subprocess import Popen,PIPE
+        from subprocess import Popen,PIPE
 
-         proclst = ['gpg', '--quiet', '--output', '-', '--decrypt', passfile]
+        env = {}
+        gpg_info_name = expanduser('~/.gpg-agent-info')
+        has_gpg_info = isfile(gpg_info_name)
+        proclst = ['gpg', '--quiet', '--output', '-', '--decrypt', passfile]
 
-         if IsRunning('gpg-agent'): 
-             proclst.insert(1, '--no-tty')
-             proclst.insert(1, '--use-agent')
+        if not(self.executable):
+            if not(IsRunning('gpg-agent')):
+                raise RuntimeError("No gpg-agent running when rpass is being used as a plugin.")
+            if not(has_gpg_info):
+                raise RuntimeError("gpg-agent invoked without --write-env-file option when rpass is being used as a plugin.")
 
-         proc = Popen(proclst, stdout = PIPE, stderr = PIPE)
+        if IsRunning('gpg-agent'): 
+            proclst.insert(1, '--no-tty')
+            proclst.insert(1, '--use-agent')
+            if has_gpg_info:
+                with open(gpg_info_name) as GPG_FILE:
+                    tmp = GPG_FILE.readlines()
+                    env = dict([tuple(t.strip().split('=')) for t in tmp])
+
+        proc = Popen(proclst, stdout = PIPE, stderr = PIPE, env = env)
      
-         retstr, errstr = tuple(str(s, encoding = "utf-8") for s in proc.communicate())
-         if errstr.find("gpg: no valid OpenPGP data found.") != -1: raise UnencryptedFile
-         elif (errstr.find("gpg: decryption failed: secret key not available") != -1) or (errstr.find("gpg: decrypt_message failed: eof") != -1): raise InvalidEncryptionKey
+        retstr, errstr = tuple(str(s, encoding = "utf-8") for s in proc.communicate())
+        if errstr.find("gpg: no valid OpenPGP data found.") != -1: raise UnencryptedFile
+        elif (errstr.find("gpg: decryption failed: secret key not available") != -1) or (errstr.find("gpg: decrypt_message failed: eof") != -1): raise InvalidEncryptionKey
 
-         return retstr.strip()
+        return retstr.strip()
 
     def EncryptPassFile(self, passfile, contents):
         from subprocess import Popen,PIPE
