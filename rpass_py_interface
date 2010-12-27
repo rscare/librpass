@@ -1,14 +1,19 @@
 #!/usr/bin/python
 
-def PrintAccountInfo(acinfo, keys, pfull = False, batch = False):
+def PrintAccountInfo(acinfo, keys, color, pfull = False, batch = False):
     fgnescape = '\x1b[0;38;5;{0}m'
     bgnescape = '\x1b[0;48;5;{0}m'
     fgbescape = '\x1b[1;38;5;{0}m'
     txtreset = "\x1b[0m"
 
-    ac_color = fgbescape.format(7)
-    user_color = fgnescape.format(6)
-    pass_color = fgnescape.format(9)
+    ac_color = ''
+    user_color = ''
+    pass_color = ''
+
+    if color:
+        ac_color = fgbescape.format(7)
+        user_color = fgnescape.format(6)
+        pass_color = fgnescape.format(9)
 
     for ac in sorted(acinfo.keys()):
         if batch:
@@ -87,6 +92,9 @@ def ReadConfigFile(filename, info = {}):
     if config.has_option('display', 'fields'): 
         info['fields'] = [field.strip() for field in 
                 config.get('display', 'fields').split(',') if field.strip()]
+    if config.has_option('display', 'color'):
+        if config.get('display', 'color').lower()[0] == 'y': info['color'] = True
+        else: info['color'] = False
 
     if config.has_option('general', 'passfile'):
         from os.path import expanduser
@@ -164,7 +172,15 @@ def GetOptions():
 
     parser.add_option("-C", "--config-file", dest="conf_file",
             action = "store", type = "string",
-            help = "Specify a configuration file other than the default (.rpass.conf)")
+            help = "Specify a configuration file other than the default [.rpass.conf].")
+
+    parser.add_option("-c", "--color", dest='color',
+            action = "count", default = 0,
+            help = "Enable color printing.")
+
+    parser.add_option('--no-color', dest='no_color',
+            action = "count", default = 0,
+            help = "Disable color printing [default].")
 
     (options, args) = parser.parse_args()
 
@@ -180,6 +196,9 @@ def GetOptions():
     fops['login'] = options.login
     fops['new_entry'] = options.new_entry
     fops['del_entry'] = options.delete_entry
+    if options.color > 0: fops['color'] = True
+    if options.no_color > 0: fops['color'] = False
+    if 'color' not in fops: fops['color'] = False
 
     if not(options.print_keys): fops['fields'] = []
     else: fops['fields'] = [f.strip() for f in options.print_keys.split(',') if f.strip()]
@@ -263,6 +282,6 @@ if __name__=="__main__":
             else:
                 acinfo = ParsePassFile()
 
-            PrintAccountInfo(acinfo=acinfo, pfull = pfull, keys = options['fields'], batch = options['batch'])
+            PrintAccountInfo(acinfo=acinfo, pfull = pfull, color = options['color'], keys = options['fields'], batch = options['batch'])
         except IOError:
             print("No password file found...create it with 'rpass -a'")
