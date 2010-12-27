@@ -167,6 +167,12 @@ Creates three accounts (will be prompted for everything but account names):
 # rpass -a "Secure Account2" account3 "Account Name 4"
 ----
 
+The command *rpass -d* followed by exact account names deletes those accounts:
+
+----
+# rpass -d "Secure Account2" account3
+----
+
 PLUGIN
 ~~~~~~
 

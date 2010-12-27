@@ -358,6 +358,18 @@ Creates three accounts (will be prompted for everything but account names):
 .if n \{\
 .RE
 .\}
+.sp
+The command \fBrpass \-d\fR followed by exact account names deletes those accounts:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+# rpass \-d "Secure Account2" account3
+.fi
+.if n \{\
+.RE
+.\}
 .SS "PLUGIN"
 .if n \{\
 .sp
