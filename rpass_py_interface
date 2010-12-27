@@ -4,16 +4,17 @@ def PrintAccountInfo(acinfo, keys, color, pfull = False, batch = False):
     fgnescape = '\x1b[0;38;5;{0}m'
     bgnescape = '\x1b[0;48;5;{0}m'
     fgbescape = '\x1b[1;38;5;{0}m'
-    txtreset = "\x1b[0m"
 
     ac_color = ''
     user_color = ''
     pass_color = ''
+    txtreset = ''
 
     if color:
         ac_color = fgbescape.format(7)
         user_color = fgnescape.format(6)
         pass_color = fgnescape.format(9)
+        txtreset = '\x1b[0m'
 
     for ac in sorted(acinfo.keys()):
         if batch:
