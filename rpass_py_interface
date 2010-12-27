@@ -63,6 +63,26 @@ def AddEntry(acname = None, pinfo = None, passfile = None, nfile = False):
             field = input("Field: ")
     return pinfo
 
+def HasGPGKey():
+    """Checks if the user has a gpg key pair. If not creates it."""
+    from os import stat
+    from os.path import expanduser,isfile,join
+
+    secring = join(expanduser('~'), '.gnupg', 'secring.gpg')
+    if not(isfile(secring)) or stat(secring).st_size == 0: return False
+    else: return True
+
+def CreateGPGKey():
+    """Creates a gpg key for the user."""
+    from subprocess import call
+    print("Need to first create gpg key pair.")
+    print("Choose a secure passphrase -- this is going to be your 'master' password.")
+    print("Rerun program after key creation.\n")
+    print("WARNING: DO NOT pick a sign-only key type.\n")
+    print("-------------------------------------------------------------------------")
+    input("Press [ENTER] when ready.")
+    call('gpg --gen-key'.split(' '))
+
 if __name__=="__main__":
     from optparse import OptionParser
     from rpass import *
@@ -71,15 +91,8 @@ if __name__=="__main__":
     from os import stat
     import subprocess
 
-    secring = path_join(expanduser('~'), '.gnupg', 'secring.gpg')
-    if not(isfile(secring)) or stat(secring).st_size == 0:
-        print("Need to first create gpg key pair.")
-        print("Choose a secure passphrase -- this is going to be your 'master' password.")
-        print("Rerun program after key creation.\n")
-        print("WARNING: DO NOT pick a sign-only key type.\n")
-        print("-------------------------------------------------------------------------")
-        input("Press [ENTER] when ready.")
-        subprocess.call('gpg --gen-key'.split(' '))
+    if not(HasGPGKey()):
+        CreateGPGKey()
         exit()
 
     if not(IsRunning('gpg-agent')):
