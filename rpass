@@ -15,6 +15,10 @@ else
     echo "This could mean gpg-agent was started improperly -- rpass may not work."
 fi
 
-rpass_py_interface "$@"
+if [ ! -t 0 ] || [ ! -t 1 ]; then
+    rpass_py_interface --no-color "$@"
+else
+    rpass_py_interface "$@"
+fi
 
 # vim: filetype=sh :
