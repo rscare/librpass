@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-def PrintAccountInfo(acinfo, pfull = False, ppass = False, keys = None, batch = False):
+def PrintAccountInfo(acinfo, keys, pfull = False, batch = False):
     fgnescape = '\x1b[0;38;5;{0}m'
     bgnescape = '\x1b[0;48;5;{0}m'
     fgbescape = '\x1b[1;38;5;{0}m'
@@ -9,22 +9,25 @@ def PrintAccountInfo(acinfo, pfull = False, ppass = False, keys = None, batch = 
     user_color = fgnescape.format(6)
     pass_color = fgnescape.format(9)
 
-    if keys and ('pass' in keys): ppass = True
+    minlen = 0
+    if 'user' in keys: minlen += 1
+    if 'pass' in keys: minlen += 1
+    if len(keys) > minlen: pfull = True
 
     for ac in sorted(acinfo.keys()):
         if batch:
-                for (k, v) in acinfo[ac].items():
-                    if (not(keys) or (k in keys)) and ((k != 'pass') or ppass):
-                        print(v)
+            for (k, v) in acinfo[ac].items():
+                if k in keys:
+                    print(v)
         else:
-            if 'user' in acinfo[ac]:
+            if ('user' in acinfo[ac]) and ('user' in keys):
                 print("{0}{1} - {2}{3}".format(ac_color, ac, user_color, acinfo[ac]['user']))
             else: print("{0}{1}".format(ac_color, ac))
 
-            if ppass and ('pass' in acinfo[ac]):
+            if ('pass' in keys) and ('pass' in acinfo[ac]):
                 print("\t{0}{1}".format(pass_color, acinfo[ac]['pass']))
 
-            if pfull:
+            if pfull or len(keys) > 0:
                 for (k, v) in acinfo[ac].items():
                     if k not in ['user', 'pass']:
                         print("\t{0}: {1}".format(k, v))
@@ -38,10 +41,10 @@ def AddEntry(acname = None, pinfo = None, passfile = None, nfile = False):
     if type(pinfo) != dict: pinfo = {}
     pinfo[acname] = {}
 
-    usr = input("User - leave blank to remove field: ")
+    usr = input("{0}: User - leave blank to remove field: ".format(acname))
 
     from getpass import getpass as gp
-    pwrd = gp("Password - leave blank to remove field (typed letters do not appear): ")
+    pwrd = gp("{0}: Password - leave blank to remove field (typed letters do not appear): ".format(acname))
 
     if usr.strip():
         pinfo[acname]['user'] = usr
@@ -51,7 +54,7 @@ def AddEntry(acname = None, pinfo = None, passfile = None, nfile = False):
     response = input("Would you like to add additional fields to the entry? [N/y] ")
     if response != '' and response.lower()[0] == 'y':
         print("Please type field and hit enter - blank field cancels.")
-        field = input("Field: ")
+        field = input("{0}: Field: ".format(acname))
         while(field):
             if field in ["username", "u"]: field = "user"
             if field in ["password", "p", "pass"]:
@@ -60,8 +63,30 @@ def AddEntry(acname = None, pinfo = None, passfile = None, nfile = False):
                 pinfo[acname][field] = gp("{0}: ".format(field))
             else:
                 pinfo[acname][field] = input("{0}: ".format(field))
-            field = input("Field: ")
+            field = input("{0}: Field: ".format(acname))
     return pinfo
+
+def ReadConfigFile(filename, info = {}):
+    """When passed a filename, reads the config file for rpass information.
+    
+    Returns a dictionary of useful values."""
+    import configparser
+    from os.path import expanduser,isfile
+
+    if not(isfile(expanduser(filename))): return info
+
+    config = configparser.ConfigParser()
+    config.read(expanduser(filename))
+
+    if config.has_option('display', 'fields'): 
+        info['fields'] = [field.strip() for field in 
+                config.get('display', 'fields').split(',') if field.strip()]
+
+    if config.has_option('general', 'passfile'):
+        from os.path import expanduser
+        info['passfile'] = expanduser(config.get('general', 'passfile'))
+
+    return info
 
 def HasGPGKey():
     """Checks if the user has a gpg key pair. If not creates it."""
@@ -83,20 +108,19 @@ def CreateGPGKey():
     input("Press [ENTER] when ready.")
     call('gpg --gen-key'.split(' '))
 
-if __name__=="__main__":
+def ConstructFields(primary, secondary, default = ['user']):
+    """Constructs a list of fields, primary overrides secondary overrides default."""
+    
+    if primary:
+        return primary
+    elif secondary:
+        return secondary
+    else:
+        return default
+
+def GetOptions():
+    """Gets options from user through configuration file and commandline."""
     from optparse import OptionParser
-    from rpass import *
-    from os.path import expanduser,isfile
-    from os.path import join as path_join
-    from os import stat
-    import subprocess
-
-    if not(HasGPGKey()):
-        CreateGPGKey()
-        exit()
-
-    if not(IsRunning('gpg-agent')):
-        print("gpg-agent is not running. This is not recommended. Continuing anyway...")
 
     parser = OptionParser()
 
@@ -106,11 +130,11 @@ if __name__=="__main__":
 
     parser.add_option("-u", "--users", dest="print_users",
             action="store_true", default=False,
-            help="Print usernames to stdout. Works in batch or regular mode.")
+            help="Add users to printed fields.")
 
-    parser.add_option("--passwords", dest="print_pass",
+    parser.add_option("-p", "--passwords", dest="print_pass",
             action="store_true", default=False,
-            help="Print passwords to stdout. Works in batch or regular mode.")
+            help="Add passwords to printed fields.")
 
     parser.add_option("-n", "--no-copy", dest="xclip",
             action="store_false", default=True,
@@ -125,12 +149,12 @@ if __name__=="__main__":
             help = "Add account(s). Optionally list new account names on the commandline.")
 
     parser.add_option("-d", "--delete-entry", dest="delete_entry",
-            action = "store",
-            help = "Specify an account to delete. Must match exactly.")
+            action = "store_true", default=False,
+            help = "Specify account(s) to delete on commandline. Must match exactly.")
 
     parser.add_option("-k", "--keys", dest="print_keys",
             action = "store", type = "string",
-            help = "Specify, in a comma-separated list, which fields to print in batch mode: i.e. user,pass")
+            help = "Specify, in a comma-separated list (no spaces), which fields to print: i.e., custom1,custom2.\nUse --users and --passwords for non-custom fields.")
 
     parser.add_option("-C", "--config-file", dest="conf_file",
             action = "store", type = "string",
@@ -138,7 +162,46 @@ if __name__=="__main__":
 
     (options, args) = parser.parse_args()
 
-    if options.login:
+    info = {}
+    if options.conf_file:
+        info = ReadConfigFile(options.conf_file)
+    else:
+        info = ReadConfigFile('~/.rpass.conf')
+
+    fops = info
+    fops['batch'] = options.batch_mode
+    fops['copy'] = options.xclip
+    fops['login'] = options.login
+    fops['new_entry'] = options.new_entry
+    fops['del_entry'] = options.delete_entry
+
+    if not(options.print_keys): fops['fields'] = []
+    else: fops['fields'] = [f.strip() for f in options.print_keys.split(',') if f.strip()]
+    if options.print_users: fops['fields'].append('user')
+    if options.print_pass: fops['fields'].extend(["pass"])
+
+    # Commandline overrides config file
+    fops['fields'] = ConstructFields(primary = fops['fields'], secondary = info['fields'])
+
+    return (fops, args)
+
+if __name__=="__main__":
+    from rpass import *
+    from os.path import expanduser,isfile
+    from os.path import join as path_join
+    from os import stat
+    import subprocess
+
+    if not(HasGPGKey()):
+        CreateGPGKey()
+        exit()
+
+    if not(IsRunning('gpg-agent')):
+        print("gpg-agent is not running. This is not recommended. Continuing anyway...")
+
+    (options, args) = GetOptions()
+
+    if options['login']:
         try:
             DecryptPassFile()
             exit(0)
@@ -146,7 +209,7 @@ if __name__=="__main__":
             print("Login failed (bad password or bad keyfile).")
             exit(1)
 
-    elif options.new_entry:
+    elif options['new_entry']:
         pinfo = None
 
         try:
@@ -165,32 +228,35 @@ if __name__=="__main__":
         if pinfo: EncryptPassFile(CreatePassFile(pinfo))
         exit()
 
-    elif options.delete_entry:
-        DeleteEntry(options.delete_entry); exit()
+    elif options['del_entry']:
+        if len(args) > 0:
+            for arg in args: DeleteEntry(arg)
+        else: print ("Please specify entry or entries to delete.")
+        exit()
 
     else:
         acinfo = {}
         pfull = False
-        keys = []
 
         try:
             if len(args) > 0:
+
                 pfull = True
+
                 for arg in args: 
-                    acinfo.update(GetAccountInfo(arg, strict = options.batch_mode))
-                if not(options.batch_mode) and options.xclip: 
+                    acinfo.update(GetAccountInfo(arg, strict = options['batch']))
+
+                # Copy passwords...
+                if not(options['batch']) and options['copy']:
                     try:
                         CopyPass(acinfo=acinfo)
                     except OSError:
                         print("'xclip' not found. Please install xclip to automatically copy first matched password to clipboard (avoid printing passwords).")
                         print("To see passwords, run rpass with the --passwords option.\n")
+
             else:
                 acinfo = ParsePassFile()
 
-            if options.print_users: keys.append("user")
-            if options.print_pass: keys.extend(["pass"])
-            if options.print_keys: keys.extend(options.print_keys.split(','))
-
-            PrintAccountInfo(acinfo=acinfo, ppass=options.print_pass, pfull = pfull, keys = keys, batch = options.batch_mode)
+            PrintAccountInfo(acinfo=acinfo, pfull = pfull, keys = options['fields'], batch = options['batch'])
         except IOError:
             print("No password file found...create it with 'rpass -a'")
