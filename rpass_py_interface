@@ -10,11 +10,6 @@ def PrintAccountInfo(acinfo, keys, pfull = False, batch = False):
     user_color = fgnescape.format(6)
     pass_color = fgnescape.format(9)
 
-    minlen = 0
-    if 'user' in keys: minlen += 1
-    if 'pass' in keys: minlen += 1
-    if len(keys) > minlen: pfull = True
-
     for ac in sorted(acinfo.keys()):
         if batch:
             for (k, v) in acinfo[ac].items():
@@ -30,7 +25,15 @@ def PrintAccountInfo(acinfo, keys, pfull = False, batch = False):
 
             print(txtreset, end='')
 
-            if pfull:
+            minlen = 0
+            if 'user' in keys: minlen += 1
+            if 'pass' in keys: minlen += 1
+
+            if len(keys) > minlen:
+                for (k, v) in acinfo[ac].items():
+                    if (k not in ['user', 'pass']) and (k in keys):
+                        print("\t{0}: {1}".format(k, v))
+            elif pfull:
                 for (k, v) in acinfo[ac].items():
                     if k not in ['user', 'pass']:
                         print("\t{0}: {1}".format(k, v))
