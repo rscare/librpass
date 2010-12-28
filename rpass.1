@@ -422,7 +422,24 @@ For rpass to be effective as a plugin, you need \fBgpg\-agent\fR
 .sp .5v
 .RE
 .sp
-For any python program or program with support for python plugins, "import rpass" will allow you to use all the functions of the main program\&.
+For any python program or program with support for python plugins, "import rpass" will allow you to use all the functions of the main program\&. The most obvious/probably most useful case is one where the program wants to retrieve the information about a specific account\&. Here is how to properly do this for account \fIAccount Name\fR, putting the information into the dictionary infodict:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+import rpass
+infodict = rpass\&.rpass()\&.entries[\*(AqAccount Name\*(Aq]
+
+# Get username
+infodict[\*(Aquser\*(Aq]
+
+# Get password
+infodict[\*(Aqpass\*(Aq]
+.fi
+.if n \{\
+.RE
+.\}
 .sp
 For non\-python programs and scripts the \-\-batch and \-\-keys options allow the user to select information to print for any account\&.
 .sp

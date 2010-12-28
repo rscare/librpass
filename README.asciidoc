@@ -195,11 +195,28 @@ PLUGIN
 WARNING: For rpass to be effective as a plugin, you need *gpg-agent*
 
 For any python program or program with support for python plugins, "import
-rpass" will allow you to use all the functions of the main program.
+rpass" will allow you to use all the functions of the main program. The most
+obvious/probably most useful case is one where the program wants to retrieve
+the information about a specific account. Here is how to properly do this for
+account 'Account Name', putting the information into the dictionary infodict:
 
-For non-python programs and scripts the --batch and --keys options allow the user to select information to print for any account.
+----
+import rpass
+infodict = rpass.rpass().entries['Account Name']
 
-The *--batch* option forces rpass to do exact matching on account names and eliminates all formatting and field labels. The *--keys* option allows the user to specify custom keys to print.
+# Get username
+infodict['user']
+
+# Get password
+infodict['pass']
+----
+
+For non-python programs and scripts the --batch and --keys options allow the
+user to select information to print for any account.
+
+The *--batch* option forces rpass to do exact matching on account names and
+eliminates all formatting and field labels. The *--keys* option allows the user
+to specify custom keys to print.
 
 BATCH EXAMPLES
 ~~~~~~~~~~~~~~
