@@ -136,8 +136,8 @@ class rpass:
         if not isfile(passfile): raise IOError("Password file not found.")
 
         from subprocess import Popen,PIPE
+        from os import environ
 
-        env = {}
         gpg_info_name = expanduser('~/.gpg-agent-info')
         has_gpg_info = isfile(gpg_info_name)
         proclst = ['gpg', '--quiet', '--output', '-', '--decrypt', passfile]
@@ -154,9 +154,9 @@ class rpass:
             if has_gpg_info:
                 with open(gpg_info_name) as GPG_FILE:
                     tmp = GPG_FILE.readlines()
-                    env = dict([tuple(t.strip().split('=')) for t in tmp])
+                    environ.update(dict([tuple(t.strip().split('=')) for t in tmp]))
 
-        proc = Popen(proclst, stdout = PIPE, stderr = PIPE, env = env)
+        proc = Popen(proclst, stdout = PIPE, stderr = PIPE, env = environ)
      
         retstr, errstr = tuple(str(s, encoding = "utf-8") for s in proc.communicate())
         if errstr.find("gpg: no valid OpenPGP data found.") != -1: raise UnencryptedFile
