@@ -1,1 +1,1 @@
-rpass -bu "$(rpass|dmenu -i -p 'Account name: ')"|xclip -i
+rpass --batch --users "$(rpass --keys ""|dmenu -i -p 'Account name: ')"|xclip -i
