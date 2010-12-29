@@ -147,7 +147,8 @@ def GetOptions():
     if options.color > 0: fops['color'] = True
     if options.no_color > 0: fops['color'] = False
 
-    if not(options.print_keys): fops['fields'] = []
+    if options.print_keys == None: fops['fields'] = []
+    elif options.print_keys.strip() == "": fops['fields'] = [None]
     else: fops['fields'] = [f.strip() for f in options.print_keys.split(',') if f.strip()]
     if options.print_users: fops['fields'].append('user')
     if options.print_pass: fops['fields'].extend(["pass"])
@@ -173,9 +174,11 @@ if __name__=="__main__":
         else: options['color'] = False
 
     if not(options['fields']):
-        if 'fields' in account.options and account.options['fields'] != [None]:
+        if 'fields' in account.options:
             options['fields'] = account.options['fields']
         else: options['fields'] = []
+
+    if options['fields'] == [None]: options['fields'] = []
 
     if account.first:
         response = input("No password file at {0} found. Would you like to create it (note: please don't create this file manually)? [Y/n] ".format(account.passfile))
