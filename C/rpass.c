@@ -1,34 +1,121 @@
-#include <stdlib.h>
 #include <stdio.h>
 #include <gpgme.h>
+#include "rpass.h"
 
-#define PROTOCOL GPGME_PROTOCOL_OpenPGP
-#define PREF_ALGO GPGME_PK_RSA
-#define PREF_HASH GPGME_MD_SHA256
+static gpgme_ctx_t ctx = NULL;
 
-void rpass_error(const char *err_msg){
+void rpass_error(const char const *err_msg) {
     fprintf(stderr, err_msg);
 }
 
-int main (int argc, char const *argv[])
-{
-    const char test_string[] = "Hello Yuri.";
-
-    gpgme_engine_info_t engine_info = NULL;
-    gpgme_data_t DH = NULL;
-    gpgme_ctx_t ctx = NULL;
-
-    // Check that the engine exists
-    if (gpgme_engine_check_version(PROTOCOL) == GPG_ERR_INV_ENGINE) {
-        rpass_error("Invalid engine.\n"); 
-        return 1;
+int create_gpg_data(gpgme_data_t *data, FILE *fp, char *str, int len, int COPY) {
+    if (fp != NULL) { // Create file-based data
+        switch (gpgme_data_new_from_stream(data, fp)) {
+            case GPG_ERR_NO_ERROR:
+                return 1;
+                break;
+            default:
+                rpass_error("Failed to create data stream from file.");
+                return 0;
+                break;
+        }
     }
 
-    // Get the engine's info
-    if (gpgme_get_engine_info(&engine_info) != GPG_ERR_NO_ERROR) {
-        rpass_error("Could not get engine info.\n"); 
-        return 1;
+    if (str != NULL) { // Create data-based data
+        switch(gpgme_data_new_from_mem(data, str, len, COPY)) {
+            case GPG_ERR_NO_ERROR:
+                return 1;
+                break;
+            default:
+                rpass_error("Failed to create data stream from memory.");
+                return 0;
+                break;
+        }
     }
+
+    switch (gpgme_data_new(data)) { // Create generic data
+        case GPG_ERR_NO_ERROR:
+            return 1;
+            break;
+        default:
+            rpass_error("Failed to create data stream.");
+            return 0;
+            break;
+    }
+}
+
+int decrypt_object(gpgme_data_t cipher_text, gpgme_data_t plain_text) {
+    switch (gpgme_op_decrypt(ctx, cipher_text, plain_text)) {
+        case GPG_ERR_NO_ERROR:
+            return 0;
+            break;
+        case GPG_ERR_INV_VALUE:
+            rpass_error("Invalid pointer.");
+            return 1;
+            break;
+        case GPG_ERR_NO_DATA:
+            rpass_error("No data.");
+            return 1;
+            break;
+        case GPG_ERR_DECRYPT_FAILED:
+            rpass_error("Invalid data.");
+            return 1;
+            break;
+        case GPG_ERR_BAD_PASSPHRASE:
+            rpass_error("Bad passphrase.");
+            return 1;
+            break;
+        default:
+            rpass_error("Unknown error.");
+            return 1;
+            break;
+    }
+}
+
+int encrypt_object(gpgme_data_t plain_text, gpgme_data_t cipher_text) {
+    gpgme_key_t keys[] = {NULL, NULL};
+    gpgme_op_keylist_start(ctx, NULL, 0);
+    gpgme_op_keylist_next(ctx, &keys[0]);
+ 
+    // Encryption method
+    switch (gpgme_op_encrypt(ctx, keys, 0, plain_text, cipher_text)) {
+        case GPG_ERR_UNUSABLE_PUBKEY:
+            rpass_error("Unusable public key.\n");
+            return 1;
+            break;
+        case GPG_ERR_INV_VALUE:
+            rpass_error("Invalid pointer.\n");
+            return 1;
+            break;
+        case GPG_ERR_NO_ERROR:
+            break;
+        default:
+            rpass_error("Unkown error.\n");
+            return 1;
+            break;
+    }
+
+    // Release the key object
+    gpgme_key_release(keys[0]);
+    return 0;
+}
+
+void print_gpgme_data(gpgme_data_t data) {
+    ssize_t size_read = 0;
+    char tmp_string[BUF_LEN + 1];
+
+    gpgme_data_seek(data, 0, SEEK_SET);
+    while(size_read = gpgme_data_read(data, tmp_string, BUF_LEN)) {
+        tmp_string[size_read] = '\0';
+        printf("%s", tmp_string);
+    }
+    putchar('\n');
+    gpgme_data_seek(data, 0, SEEK_SET);
+}
+
+int initialize_engine() {
+    if (ctx != NULL)
+        return 0;
 
     // Verify protocol
     if (gpgme_engine_check_version(PROTOCOL) != GPG_ERR_NO_ERROR) {
@@ -37,7 +124,10 @@ int main (int argc, char const *argv[])
     }
 
     // Verify engine
-    printf("Current version: %s.\n", gpgme_check_version(NULL));
+    if (gpgme_check_version(NULL) == NULL) {
+        rpass_error("No gpgme version available.\n");
+        return 1;
+    }
 
     // Create context
     switch (gpgme_new(&ctx)) {
@@ -66,24 +156,6 @@ int main (int argc, char const *argv[])
         rpass_error("Could not set context protocol.\n");
         return 1;
     }
-
-    gpgme_set_armor(ctx, 1);
-
-    // Create and populate the new data object
-    if (gpgme_data_new_from_mem(&DH, test_string, sizeof(test_string), 1) != GPG_ERR_NO_ERROR) {
-        rpass_error("Could not create data object.\n");
-        return 1;
-    }
-
-    // Encrypt data
-
-    gpgme_op_keylist_start(ctx, NULL, 1);
-
-    //Destroy context
-    gpgme_release(ctx);
-
-    // Release the data buffer
-    gpgme_data_release(DH);
 
     return 0;
 }
