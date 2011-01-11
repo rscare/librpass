@@ -137,6 +137,7 @@ class rpass:
 
         from subprocess import Popen,PIPE
         from os import environ
+        from rGPG import decrypt_file
 
         gpg_info_name = expanduser('~/.gpg-agent-info')
         has_gpg_info = isfile(gpg_info_name)
@@ -149,20 +150,12 @@ class rpass:
                 raise RuntimeError("gpg-agent invoked without --write-env-file option when rpass is being used as a plugin.")
 
         if IsRunning('gpg-agent'): 
-            proclst.insert(1, '--no-tty')
-            proclst.insert(1, '--use-agent')
             if has_gpg_info:
                 with open(gpg_info_name) as GPG_FILE:
                     tmp = GPG_FILE.readlines()
                     environ.update(dict([tuple(t.strip().split('=')) for t in tmp]))
 
-        proc = Popen(proclst, stdout = PIPE, stderr = PIPE, env = environ)
-     
-        retstr, errstr = tuple(str(s, encoding = "utf-8") for s in proc.communicate())
-        if errstr.find("gpg: no valid OpenPGP data found.") != -1: raise UnencryptedFile
-        elif (errstr.find("gpg: decryption failed: secret key not available") != -1) or (errstr.find("gpg: decrypt_message failed: eof") != -1): raise InvalidEncryptionKey
-
-        return retstr.strip()
+        return decrypt_file(passfile).strip()
 
     def EncryptPassFile(self, passfile, contents):
         from subprocess import Popen,PIPE
