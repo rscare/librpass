@@ -44,7 +44,7 @@ static PyObject * decrypt_from_file(PyObject *self, PyObject *args) {
 }
 
 static PyMethodDef GPGMethods[] = {
-    { "decrypt", decrypt_from_file, METH_VARARGS,
+    { "decrypt_file", decrypt_from_file, METH_VARARGS,
     "Decrypt info from a file into memory."},
     { NULL, NULL, 0, NULL }
 };

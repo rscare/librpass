@@ -189,9 +189,8 @@ char * gpg_object_to_string(gpgme_data_t data) {
             ptmp = str + cur_size - 1;
             cur_size += read;
         }
-        for (i = 0; i < read; ++i) {
+        for (i = 0; i < read; ++i)
             *(ptmp++) = tmp_buf[i];
-        }
         *(ptmp) = '\0';
     }
 
