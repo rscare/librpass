@@ -135,7 +135,6 @@ class rpass:
         from os.path import isfile,expanduser
         if not isfile(passfile): raise IOError("Password file not found.")
 
-        from subprocess import Popen,PIPE
         from os import environ
         from rGPG import decrypt_file
 
