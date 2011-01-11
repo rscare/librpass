@@ -45,6 +45,14 @@ int create_gpg_data(gpgme_data_t *data, FILE *fp, char *str, int len, int COPY) 
     }
 }
 
+void destroy_gpg_data(gpgme_data_t data) {
+    size_t len = 0;
+    void *buf_ptr = NULL;
+    buf_ptr = gpgme_data_release_and_get_mem(data, &len);
+    if (buf_ptr != NULL)
+        gpgme_free(buf_ptr);
+}
+
 int decrypt_object(gpgme_data_t cipher_text, gpgme_data_t plain_text) {
     switch (gpgme_op_decrypt(ctx, cipher_text, plain_text)) {
         case GPG_ERR_NO_ERROR:
@@ -84,14 +92,17 @@ int encrypt_object(gpgme_data_t plain_text, gpgme_data_t cipher_text) {
             break;
         case GPG_ERR_UNUSABLE_PUBKEY:
             rpass_error("Unusable public key.\n");
+            gpgme_key_release(keys[0]);
             return 0;
             break;
         case GPG_ERR_INV_VALUE:
             rpass_error("Invalid pointer.\n");
+            gpgme_key_release(keys[0]);
             return 0;
             break;
         default:
             rpass_error("Unkown error.\n");
+            gpgme_key_release(keys[0]);
             return 0;
             break;
     }
@@ -155,6 +166,7 @@ int initialize_engine() {
     // Set the context's protocol
     if (gpgme_set_protocol(ctx, PROTOCOL) != GPG_ERR_NO_ERROR) {
         rpass_error("Could not set context protocol.\n");
+        destroy_engine();
         return 0;
     }
 

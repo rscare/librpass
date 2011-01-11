@@ -15,24 +15,38 @@ static PyObject * encrypt_to_file(PyObject *self, PyObject *args) {
 
     PyObject * result = NULL;
 
-    size_t len = 0;
-
     if (!PyArg_ParseTuple(args, "ss", &contents, &filename))
         return NULL;
     if (!(fp = fopen(filename, "wb")))
         return NULL;
-    if (!create_gpg_data(&plain_text, NULL, contents, strlen(contents), 0))
-        return NULL;
-    if (!create_gpg_data(&cipher_text, fp, NULL, 0, 0))
-        return NULL;
-    if (!initialize_engine())
-        return NULL;
-    if (!encrypt_object(plain_text, cipher_text))
-        return NULL;
 
+    if (!create_gpg_data(&plain_text, NULL, contents, strlen(contents), 0)) {
+        fclose(fp);
+        return NULL;
+    }
+    if (!create_gpg_data(&cipher_text, fp, NULL, 0, 0)) {
+        fclose(fp);
+        destroy_gpg_data(plain_text);
+        return NULL;
+    }
+    if (!initialize_engine()) {
+        destroy_gpg_data(cipher_text);
+        fclose(fp);
+        destroy_gpg_data(plain_text);
+        return NULL;
+    }
+    if (!encrypt_object(plain_text, cipher_text)) {
+        destroy_gpg_data(cipher_text);
+        fclose(fp);
+        destroy_gpg_data(plain_text);
+        destroy_engine();
+        return NULL;
+    }
+
+    destroy_gpg_data(cipher_text);
+    fclose(fp);
+    destroy_gpg_data(plain_text);
     destroy_engine();
-    gpgme_free(gpgme_data_release_and_get_mem(plain_text, &len));
-    gpgme_free(gpgme_data_release_and_get_mem(cipher_text, &len));
 
     return Py_BuildValue("");
 }
@@ -52,22 +66,35 @@ static PyObject * decrypt_from_file(PyObject *self, PyObject *args) {
         return NULL;
     if (!(fp = fopen(filename, "rb")))
         return NULL;
-    if (!create_gpg_data(&plain_text, NULL, NULL, 0, 0))
+    if (!create_gpg_data(&plain_text, NULL, NULL, 0, 0)) {
+        fclose(fp);
         return NULL;
-    if (!create_gpg_data(&cipher_text, fp, NULL, 0, 0))
+    }
+    if (!create_gpg_data(&cipher_text, fp, NULL, 0, 0)) {
+        fclose(fp);
+        destroy_gpg_data(plain_text);
         return NULL;
-    if (!initialize_engine())
+    }
+    if (!initialize_engine()) {
+        destroy_gpg_data(cipher_text);
+        fclose(fp);
+        destroy_gpg_data(plain_text);
         return NULL;
-    if (!decrypt_object(cipher_text, plain_text))
+    }
+    if (!decrypt_object(cipher_text, plain_text)) {
+        destroy_gpg_data(cipher_text);
+        fclose(fp);
+        destroy_gpg_data(plain_text);
+        destroy_engine();
         return NULL;
+    }
 
-    destroy_engine();
-    gpgme_free(gpgme_data_release_and_get_mem(cipher_text, &len));
+    destroy_gpg_data(cipher_text);
     fclose(fp);
+    destroy_engine();
 
     result = Py_BuildValue("s", gpg_object_to_string(plain_text));
-
-    gpgme_data_release(plain_text);
+    destroy_gpg_data(plain_text);
 
     return result;
 }
