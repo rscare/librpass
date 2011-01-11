@@ -158,9 +158,8 @@ class rpass:
         return decrypt_file(passfile).strip()
 
     def EncryptPassFile(self, passfile, contents):
-        from subprocess import Popen,PIPE
-        textproc = Popen(['echo', contents], shell=False, stdout=PIPE)
-        encproc = Popen(['gpg', '--default-recipient-self', '--yes', '--output', passfile, '--encrypt'], shell=False, stdin=textproc.stdout).wait()
+        from rGPG import encrypt_file
+        encrypt_file(contents, passfile)
 
     def Write(self):
         self.EncryptPassFile(self.passfile, self.CreatePassFile(self.entries))
