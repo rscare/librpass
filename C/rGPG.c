@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <gpgme.h>
+#include <string.h>
 #include "rGPG.h"
 
 static gpgme_ctx_t ctx = NULL;
@@ -186,8 +187,6 @@ char * gpg_object_to_string(gpgme_data_t data) {
     ssize_t read = 0;
     char tmp_buf[BUF_LEN];
 
-    int i;
-
     gpgme_data_seek(data, 0, SEEK_SET);
 
     while (read = gpgme_data_read(data, tmp_buf, BUF_LEN)) {
@@ -201,8 +200,8 @@ char * gpg_object_to_string(gpgme_data_t data) {
             ptmp = str + cur_size - 1;
             cur_size += read;
         }
-        for (i = 0; i < read; ++i)
-            *(ptmp++) = tmp_buf[i];
+        memcpy(ptmp, tmp_buf, read);
+        ptmp += read;
         *(ptmp) = '\0';
     }
 
