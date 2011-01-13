@@ -140,7 +140,6 @@ class rpass:
 
         gpg_info_name = expanduser('~/.gpg-agent-info')
         has_gpg_info = isfile(gpg_info_name)
-        proclst = ['gpg', '--quiet', '--output', '-', '--decrypt', passfile]
 
         if not(self.executable):
             if not(IsRunning('gpg-agent')):
