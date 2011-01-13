@@ -4,7 +4,7 @@ from distutils.core import setup, Extension
 
 rGPG = Extension('rGPG',
         sources = [ 'rGPGmodule.c', 'rGPG.c'],
-        libraries = [ 'gpgme', 'assuan', 'gpg-error' ],
+        libraries = [ 'gpgme', 'assuan', 'gpg-error', 'ncurses' ],
         )
 
 setup (name = 'rGPG', 
