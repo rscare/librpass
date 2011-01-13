@@ -1,5 +1,10 @@
-from distutils.core import setup
+from distutils.core import setup, Extension
 import os
+
+rGPG = Extension('rGPG',
+        sources = [ 'C/rGPGmodule.c', 'C/rGPG.c'],
+        libraries = [ 'gpgme', 'assuan', 'gpg-error', 'ncurses' ],
+        )
 
 if os.name == 'posix':
     from subprocess import call
@@ -17,5 +22,6 @@ setup(name = 'rpass',
         py_modules = ['rpass'],
         scripts = ['rpass', 'rpass_py_interface', 'rp', 'ru'],
         data_files = [('share/man/man1', ['rpass.1']),
-            ('share/rpass', ['rpass.example.conf'])]
+            ('share/rpass', ['rpass.example.conf'])],
+        ext_modules = [rGPG]
         )
