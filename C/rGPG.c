@@ -2,11 +2,116 @@
 #include <stdlib.h>
 #include <gpgme.h>
 #include <string.h>
+#include <errno.h>
+#include <ncurses.h>
+#include <curses.h>
+#include <ctype.h>
+#include <sys/stat.h>
+
 #include "rGPG.h"
+
+#define RGPG_PROTOCOL GPGME_PROTOCOL_OpenPGP
+#define RGPG_PREF_ALGO GPGME_PK_RSA
+#define RGPG_PREF_HASH GPGME_MD_SHA256
+#define RGPG_OUTPUT_BUF_LEN 100
+#define RGPG_PROCPATH "/proc/"
+
+#define PID_BUF
 
 static gpgme_ctx_t ctx = NULL;
 
-void rpass_error(const char const *err_msg) {
+static gpgme_error_t default_passphrase_cb(void *HOOK, const char *UID_HINT, const char *PASSPHRASE_INFO, int PREV_WAS_BAD, int FD) {
+    int ch;
+    char pass[RGPG_OUTPUT_BUF_LEN];
+    int written = 0;
+    int off = 0;
+    int res = 0;
+    int y,x = 0;
+
+    initscr();
+    raw(); // Turn off buffering
+    noecho(); // Turn off echoing
+    clear();
+
+    mvprintw(0, 0, "Passphrase for %s: ", UID_HINT); refresh();
+    move(1, 0);
+    curs_set(2);
+    while (ch = getch()) {
+        if (ch == '') {
+            if (written > 0)
+                --written;
+                getyx(stdscr, y, x);
+                mvaddch(y, x-1,' ');
+                move(y, x-1);
+                refresh();
+            continue;
+        }
+
+        pass[written++] = ch;
+        if ((ch == '\n') || (written >= RGPG_OUTPUT_BUF_LEN)) {
+            // Writing stuff in pass to file
+            do {
+                res = write(FD, &pass[off], written - off);
+                off += res;
+            } while ((res > 0) && (off != written));
+
+            if (off != written)
+                return gpgme_error_from_errno(errno);
+
+            if (ch == '\n')
+                break;
+            else
+                res = off = written = 0;
+        }
+        addch('*'); refresh();
+    }
+    clear();
+    endwin();
+
+    if (ch == '\n')
+        return 0;
+    else
+        return gpgme_error_from_errno(errno);
+}
+
+static int rGPG_agent_is_running() {
+    char *agent_info = getenv("GPG_AGENT_INFO");
+    char *begin_pid,*end_pid,*agent_pid;
+    char *proc_path;
+    struct stat info;
+
+    if (!agent_info)
+        return 0;
+
+    begin_pid = strchr(agent_info, ':'); begin_pid++;
+    end_pid = strchr(begin_pid, ':');
+
+    if (end_pid == begin_pid)
+        return 0;
+
+    agent_pid = malloc(end_pid - begin_pid + 1);
+    strncpy(agent_pid, begin_pid, end_pid - begin_pid);
+
+    proc_path = malloc(strlen(RGPG_PROCPATH) + strlen(agent_pid) + 1);
+    memcpy(proc_path, RGPG_PROCPATH, strlen(RGPG_PROCPATH));
+    strncpy(proc_path + strlen(RGPG_PROCPATH), agent_pid, strlen(agent_pid));
+
+    free(agent_pid);
+
+    if (stat(proc_path, &info)) {
+        free(proc_path);
+        return 0;
+    }
+
+    free(proc_path);
+
+    if (S_ISDIR(info.st_mode))
+        return 1;
+    else
+        return 0;
+}
+
+void rGPG_errlog(const char const *err_msg) {
     fprintf(stderr, err_msg);
 }
 
@@ -17,7 +122,7 @@ int create_gpg_data(gpgme_data_t *data, FILE *fp, char *str, int len, int COPY) 
                 return 1;
                 break;
             default:
-                rpass_error("Failed to create data stream from file.");
+                rGPG_errlog("Failed to create data stream from file.");
                 return 0;
                 break;
         }
@@ -29,7 +134,7 @@ int create_gpg_data(gpgme_data_t *data, FILE *fp, char *str, int len, int COPY) 
                 return 1;
                 break;
             default:
-                rpass_error("Failed to create data stream from memory.");
+                rGPG_errlog("Failed to create data stream from memory.");
                 return 0;
                 break;
         }
@@ -40,7 +145,7 @@ int create_gpg_data(gpgme_data_t *data, FILE *fp, char *str, int len, int COPY) 
             return 1;
             break;
         default:
-            rpass_error("Failed to create data stream.");
+            rGPG_errlog("Failed to create data stream.");
             return 0;
             break;
     }
@@ -60,23 +165,23 @@ int decrypt_object(gpgme_data_t cipher_text, gpgme_data_t plain_text) {
             return 1;
             break;
         case GPG_ERR_INV_VALUE:
-            rpass_error("Invalid pointer.");
+            rGPG_errlog("Invalid pointer.");
             return 0;
             break;
         case GPG_ERR_NO_DATA:
-            rpass_error("No data.");
+            rGPG_errlog("No data.");
             return 0;
             break;
         case GPG_ERR_DECRYPT_FAILED:
-            rpass_error("Invalid data.");
+            rGPG_errlog("Invalid data.");
             return 0;
             break;
         case GPG_ERR_BAD_PASSPHRASE:
-            rpass_error("Bad passphrase.");
+            rGPG_errlog("Bad passphrase.");
             return 0;
             break;
         default:
-            rpass_error("Unknown error.");
+            rGPG_errlog("Unknown error.");
             return 0;
             break;
     }
@@ -92,17 +197,17 @@ int encrypt_object(gpgme_data_t plain_text, gpgme_data_t cipher_text) {
         case GPG_ERR_NO_ERROR:
             break;
         case GPG_ERR_UNUSABLE_PUBKEY:
-            rpass_error("Unusable public key.\n");
+            rGPG_errlog("Unusable public key.\n");
             gpgme_key_release(keys[0]);
             return 0;
             break;
         case GPG_ERR_INV_VALUE:
-            rpass_error("Invalid pointer.\n");
+            rGPG_errlog("Invalid pointer.\n");
             gpgme_key_release(keys[0]);
             return 0;
             break;
         default:
-            rpass_error("Unkown error.\n");
+            rGPG_errlog("Unkown error.\n");
             gpgme_key_release(keys[0]);
             return 0;
             break;
@@ -115,10 +220,10 @@ int encrypt_object(gpgme_data_t plain_text, gpgme_data_t cipher_text) {
 
 void print_gpgme_data(gpgme_data_t data) {
     ssize_t size_read = 0;
-    char tmp_string[BUF_LEN + 1];
+    char tmp_string[RGPG_OUTPUT_BUF_LEN + 1];
 
     gpgme_data_seek(data, 0, SEEK_SET);
-    while(size_read = gpgme_data_read(data, tmp_string, BUF_LEN)) {
+    while(size_read = gpgme_data_read(data, tmp_string, RGPG_OUTPUT_BUF_LEN)) {
         tmp_string[size_read] = '\0';
         printf("%s", tmp_string);
     }
@@ -126,19 +231,26 @@ void print_gpgme_data(gpgme_data_t data) {
     gpgme_data_seek(data, 0, SEEK_SET);
 }
 
-int initialize_engine() {
-    if (ctx != NULL)
+int initialize_engine(int ARMOR, gpgme_error_t (*passphrase_cb)(void *, const char *, const char *, int, int)) {
+    if ((passphrase_cb == NULL) && !rGPG_agent_is_running())
+            passphrase_cb = &default_passphrase_cb;
+
+    if (ctx != NULL) {
+        gpgme_set_armor(ctx, ARMOR);
+        if (passphrase_cb != NULL)
+            gpgme_set_passphrase_cb(ctx, passphrase_cb, NULL);
         return 1;
+    }
 
     // Verify protocol
-    if (gpgme_engine_check_version(PROTOCOL) != GPG_ERR_NO_ERROR) {
-        rpass_error("Bad protocol.\n");
+    if (gpgme_engine_check_version(RGPG_PROTOCOL) != GPG_ERR_NO_ERROR) {
+        rGPG_errlog("Bad protocol.\n");
         return 0;
     }
 
     // Verify engine
     if (gpgme_check_version(NULL) == NULL) {
-        rpass_error("No gpgme version available.\n");
+        rGPG_errlog("No gpgme version available.\n");
         return 0;
     }
 
@@ -147,29 +259,36 @@ int initialize_engine() {
         case GPG_ERR_NO_ERROR:
             break;
         case GPG_ERR_INV_VALUE:
-            rpass_error("Context is not a valid pointer.\n");
+            rGPG_errlog("Context is not a valid pointer.\n");
             return 0;
             break;
         case GPG_ERR_ENOMEM:
-            rpass_error("Context could not allocate memory.\n");
+            rGPG_errlog("Context could not allocate memory.\n");
             return 0;
             break;
         case GPG_ERR_NOT_OPERATIONAL:
-            rpass_error("GPGME not initialized.\n");
+            rGPG_errlog("GPGME not initialized.\n");
             return 0;
             break;
         default:
-            rpass_error("Unknown error.\n");
+            rGPG_errlog("Unknown error.\n");
             return 0;
             break;
     }
 
     // Set the context's protocol
-    if (gpgme_set_protocol(ctx, PROTOCOL) != GPG_ERR_NO_ERROR) {
-        rpass_error("Could not set context protocol.\n");
+    if (gpgme_set_protocol(ctx, RGPG_PROTOCOL) != GPG_ERR_NO_ERROR) {
+        rGPG_errlog("Could not set context protocol.\n");
         destroy_engine();
         return 0;
     }
+
+    // Set armor
+    gpgme_set_armor(ctx, ARMOR);
+
+    // Set passphrase callback
+    if (passphrase_cb != NULL)
+        gpgme_set_passphrase_cb(ctx, passphrase_cb, NULL);
 
     return 1;
 }
@@ -185,11 +304,11 @@ char * gpg_object_to_string(gpgme_data_t data) {
     char *ptmp = NULL;
 
     ssize_t read = 0;
-    char tmp_buf[BUF_LEN];
+    char tmp_buf[RGPG_OUTPUT_BUF_LEN];
 
     gpgme_data_seek(data, 0, SEEK_SET);
 
-    while (read = gpgme_data_read(data, tmp_buf, BUF_LEN)) {
+    while (read = gpgme_data_read(data, tmp_buf, RGPG_OUTPUT_BUF_LEN)) {
         if (str == NULL) {
             cur_size += read + 1;
             str = malloc(cur_size);

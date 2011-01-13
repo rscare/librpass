@@ -4,14 +4,9 @@
 #include <stdio.h>
 #include <gpgme.h>
 
-#define PROTOCOL GPGME_PROTOCOL_OpenPGP
-#define PREF_ALGO GPGME_PK_RSA
-#define PREF_HASH GPGME_MD_SHA256
-#define BUF_LEN 20
+void rGPG_errlog(const char const *err_msg);
 
-void rpass_error(const char const *err_msg);
-
-int initialize_engine();
+int initialize_engine(int ARMOR, gpgme_error_t (*passphrase_cb)(void *, const char *, const char *, int, int));
 void destroy_engine();
 
 int decrypt_object(gpgme_data_t ctext, gpgme_data_t ptext);
