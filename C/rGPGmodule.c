@@ -29,7 +29,7 @@ static PyObject * encrypt_to_file(PyObject *self, PyObject *args) {
         destroy_gpg_data(plain_text);
         return NULL;
     }
-    if (!initialize_engine()) {
+    if (!initialize_engine(0, NULL)) {
         destroy_gpg_data(cipher_text);
         fclose(fp);
         destroy_gpg_data(plain_text);
@@ -75,7 +75,7 @@ static PyObject * decrypt_from_file(PyObject *self, PyObject *args) {
         destroy_gpg_data(plain_text);
         return NULL;
     }
-    if (!initialize_engine()) {
+    if (!initialize_engine(0, NULL)) {
         destroy_gpg_data(cipher_text);
         fclose(fp);
         destroy_gpg_data(plain_text);
