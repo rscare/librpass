@@ -110,9 +110,11 @@ static int rGPG_agent_is_running() {
     if (!agent_info)
         return 0;
 
-    begin_pid = strchr(agent_info, ':'); begin_pid++;
+    begin_pid = strchr(agent_info, ':');
     if (!begin_pid)
         return 0;
+
+    begin_pid++;
 
     end_pid = strchr(begin_pid, ':');
 
