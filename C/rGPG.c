@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 
 #include "rGPG.h"
+#include "passphrase_dialog.h"
 
 #define RGPG_PROTOCOL GPGME_PROTOCOL_OpenPGP
 #define RGPG_PREF_ALGO GPGME_PK_RSA
@@ -19,6 +20,32 @@
 #define PID_BUF
 
 static gpgme_ctx_t ctx = NULL;
+
+static gpgme_error_t default_passphrase_cb_gtk2(void *HOOK, const char *UID_HINT, const char *PASSPHRASE_INFO, int PREV_WAS_BAD, int FD) {
+    char *pass = NULL;
+    int written = 0;
+    int pass_len = 0;
+    int off = 0;
+
+    gpg_passphrase_cb_dialog(&pass);
+
+    if (pass && ((pass_len = strlen(pass)) > 0)) {
+        do {
+            written = write(FD, &pass[off], pass_len - off);
+            off += written;
+        } while ((written > 0) && off < pass_len);
+
+        free(pass);
+
+        if (off != written)
+            return gpgme_error_from_errno(errno);
+    }
+
+    if (!write(FD, "\n", 1))
+        return gpgme_error_from_errno(errno);
+
+    return 0;
+}
 
 static gpgme_error_t default_passphrase_cb(void *HOOK, const char *UID_HINT, const char *PASSPHRASE_INFO, int PREV_WAS_BAD, int FD) {
     int ch;
@@ -232,8 +259,12 @@ void print_gpgme_data(gpgme_data_t data) {
 }
 
 int initialize_engine(int ARMOR, gpgme_error_t (*passphrase_cb)(void *, const char *, const char *, int, int)) {
-    if ((passphrase_cb == NULL) && !rGPG_agent_is_running())
+    if ((passphrase_cb == NULL) && !rGPG_agent_is_running()) {
+        if (getenv("DISPLAY"))
+            passphrase_cb = &default_passphrase_cb_gtk2;
+        else
             passphrase_cb = &default_passphrase_cb;
+    }
 
     if (ctx != NULL) {
         gpgme_set_armor(ctx, ARMOR);
