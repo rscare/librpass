@@ -111,9 +111,12 @@ static int rGPG_agent_is_running() {
         return 0;
 
     begin_pid = strchr(agent_info, ':'); begin_pid++;
+    if (!begin_pid)
+        return 0;
+
     end_pid = strchr(begin_pid, ':');
 
-    if (end_pid == begin_pid)
+    if (!end_pid || (end_pid == begin_pid))
         return 0;
 
     agent_pid = malloc(end_pid - begin_pid + 1);
