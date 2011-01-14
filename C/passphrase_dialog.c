@@ -13,8 +13,11 @@ static void get_passphrase(GtkWidget *widget, gpointer data) {
 }
 
 static gboolean delete_event(GtkWidget *widget, GdkEvent *event, gpointer data) {
-    gtk_main_quit();
     return FALSE;
+}
+
+static void destroy(GtkWidget *widget, gpointer data) {
+    gtk_main_quit();
 }
 
 int gpg_passphrase_cb_dialog(char **pass) {
@@ -35,25 +38,27 @@ int gpg_passphrase_cb_dialog(char **pass) {
     gtk_container_set_border_width(GTK_CONTAINER(window), 10);
 
     gtk_signal_connect(window, "delete-event", G_CALLBACK(delete_event), NULL);
+    gtk_signal_connect(window, "destroy", G_CALLBACK(destroy), NULL);
 
     table = gtk_table_new(2, 2, TRUE);
     gtk_container_add(GTK_CONTAINER(window), table);
 
     text_entry = gtk_entry_new();
     g_signal_connect(text_entry, "activate", G_CALLBACK(get_passphrase), (gpointer)text_entry);
-    g_signal_connect(text_entry, "activate", G_CALLBACK(delete_event), NULL);
+    g_signal_connect_swapped(text_entry, "activate", G_CALLBACK(gtk_widget_destroy), window);
+
     gtk_entry_set_visibility(GTK_ENTRY(text_entry), FALSE);
     gtk_table_attach(GTK_TABLE(table), text_entry, 0, 2, 0, 1, GTK_FILL, GTK_SHRINK, 3, 3);
     gtk_widget_show(text_entry);
 
     button = gtk_button_new_with_mnemonic("_Cancel");
-    g_signal_connect(button, "clicked", G_CALLBACK(delete_event), NULL);
+    g_signal_connect_swapped(button, "clicked", G_CALLBACK(gtk_widget_destroy), window);
     gtk_table_attach(GTK_TABLE(table), button, 0, 1, 1, 2, GTK_FILL, GTK_SHRINK, 3, 3);
     gtk_widget_show(button);
 
     button = gtk_button_new_with_mnemonic("_OK");
     g_signal_connect(button, "clicked", G_CALLBACK(get_passphrase), (gpointer)text_entry);
-    g_signal_connect(button, "clicked", G_CALLBACK(delete_event), NULL);
+    g_signal_connect_swapped(button, "clicked", G_CALLBACK(gtk_widget_destroy), window);
     gtk_table_attach(GTK_TABLE(table), button, 1, 2, 1, 2, GTK_FILL, GTK_SHRINK, 3, 3);
     gtk_widget_show(button);
 
