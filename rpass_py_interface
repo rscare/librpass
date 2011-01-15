@@ -18,6 +18,8 @@ def PrintAccountInfo(acinfo, keys, color, pfull = False, batch = False):
 
     for ac in sorted(acinfo.keys()):
         if batch:
+            if 'acname' in keys:
+                print(ac)
             for (k, v) in acinfo[ac].items():
                 if k in keys:
                     print(v)
