@@ -9,12 +9,14 @@ rpass_command="rpass_py_interface"
 
 [ ! -t 1 ] && rpass_command=$rpass_command" --no-color"
 
+count=0
 if [ ! -t 0 ]; then
     while read line; do
+        count=1
         $rpass_command "$@" "$line"
     done
-else
-    $rpass_command "$@"
 fi
+
+[ $count -eq 0 ] && $rpass_command "$@"
 
 # vim: filetype=sh :
