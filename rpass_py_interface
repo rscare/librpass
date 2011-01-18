@@ -198,10 +198,10 @@ if __name__=="__main__":
 
     if options['login']:
         try:
-            account.DecryptPassFile()
+            account.DecryptPassFile(account.passfile)
             exit(0)
-        except rpass.InvalidEncryptionKey:
-            print("Login failed (bad password or bad keyfile).")
+        except:
+            print("Login failed.")
             exit(1)
 
     elif options['new_entry']:
@@ -210,7 +210,7 @@ if __name__=="__main__":
                 for arg in args: account.AddEntry(*CreateEntry(arg))
             else: account.AddEntry(*CreateEntry())
             account.Write()
-        except rpass.ExistingEntry:
+        except ExistingEntry:
             print("Entry exists...aborting addition.")
 
         exit()
@@ -221,7 +221,7 @@ if __name__=="__main__":
                 for arg in args: account.DeleteEntry(entry = arg)
                 account.Write()
             else: print ("Please specify entry or entries to delete.")
-        except rpass.NonExistentEntry:
+        except NonExistentEntry:
             print("One of your entries does not exist. Deleting operation aborted.")
         exit()
 
