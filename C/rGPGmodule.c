@@ -5,6 +5,8 @@
 
 #include "rGPG.h"
 
+static PyObject *rGPGError;
+
 static PyObject * encrypt_to_file(PyObject *self, PyObject *args) {
     gpgme_data_t plain_text = NULL;
     gpgme_data_t cipher_text = NULL;
@@ -15,24 +17,31 @@ static PyObject * encrypt_to_file(PyObject *self, PyObject *args) {
 
     PyObject * result = NULL;
 
-    if (!PyArg_ParseTuple(args, "ss", &contents, &filename))
+    if (!PyArg_ParseTuple(args, "ss", &contents, &filename)) {
+        PyErr_SetString(PyExc_TypeError, "Argument errors.");
         return NULL;
-    if (!(fp = fopen(filename, "wb")))
+    }
+    if (!(fp = fopen(filename, "wb"))) {
+        PyErr_SetString(PyExc_IOError, "Unable to open file.");
         return NULL;
+    }
 
     if (!create_gpg_data(&plain_text, NULL, contents, strlen(contents), 0)) {
         fclose(fp);
+        PyErr_SetString(rGPGError, "Failed to allocate plain text buffer.");
         return NULL;
     }
     if (!create_gpg_data(&cipher_text, fp, NULL, 0, 0)) {
         fclose(fp);
         destroy_gpg_data(plain_text);
+        PyErr_SetString(rGPGError, "Failed to allocate cipher text buffer.");
         return NULL;
     }
     if (!initialize_engine(0, NULL)) {
         destroy_gpg_data(cipher_text);
         fclose(fp);
         destroy_gpg_data(plain_text);
+        PyErr_SetString(rGPGError, "Failed to initialize engine.");
         return NULL;
     }
     if (!encrypt_object(plain_text, cipher_text)) {
@@ -40,6 +49,7 @@ static PyObject * encrypt_to_file(PyObject *self, PyObject *args) {
         fclose(fp);
         destroy_gpg_data(plain_text);
         destroy_engine();
+        PyErr_SetString(rGPGError, "Failed to decrypt data.");
         return NULL;
     }
 
@@ -62,23 +72,30 @@ static PyObject * decrypt_from_file(PyObject *self, PyObject *args) {
 
     PyObject * result = NULL;
 
-    if (!PyArg_ParseTuple(args, "s", &filename)) 
+    if (!PyArg_ParseTuple(args, "s", &filename)) {
+        PyErr_SetString(PyExc_TypeError, "Argument errors.");
         return NULL;
-    if (!(fp = fopen(filename, "rb")))
+    }
+    if (!(fp = fopen(filename, "rb"))) {
+        PyErr_SetString(PyExc_IOError, "Unable to open file.");
         return NULL;
+    }
     if (!create_gpg_data(&plain_text, NULL, NULL, 0, 0)) {
         fclose(fp);
+        PyErr_SetString(rGPGError, "Unable to allocate plain text buffer.");
         return NULL;
     }
     if (!create_gpg_data(&cipher_text, fp, NULL, 0, 0)) {
         fclose(fp);
         destroy_gpg_data(plain_text);
+        PyErr_SetString(rGPGError, "Unable to allocate cipher text buffer.");
         return NULL;
     }
     if (!initialize_engine(0, NULL)) {
         destroy_gpg_data(cipher_text);
         fclose(fp);
         destroy_gpg_data(plain_text);
+        PyErr_SetString(rGPGError, "Unable to initialize engine.");
         return NULL;
     }
     if (!decrypt_object(cipher_text, plain_text)) {
@@ -86,6 +103,7 @@ static PyObject * decrypt_from_file(PyObject *self, PyObject *args) {
         fclose(fp);
         destroy_gpg_data(plain_text);
         destroy_engine();
+        PyErr_SetString(rGPGError, "Unable to decrypt cipher text.");
         return NULL;
     }
 
@@ -116,5 +134,13 @@ static struct PyModuleDef rGPGmodule = {
 };
 
 PyMODINIT_FUNC PyInit_rGPG() {
-    return PyModule_Create(&rGPGmodule);
+    PyObject *m = PyModule_Create(&rGPGmodule);
+    if (m == NULL)
+        return NULL;
+
+    rGPGError = PyErr_NewException("rGPG.rGPGError", NULL, NULL);
+    Py_INCREF(rGPGError);
+    PyModule_AddObject(m, "rGPGError", rGPGError);
+
+    return m;
 }
