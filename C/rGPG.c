@@ -144,7 +144,9 @@ static int rGPG_agent_is_running() {
 }
 
 void rGPG_errlog(const char const *err_msg) {
+#ifdef DEBUG
     fprintf(stderr, err_msg);
+#endif
 }
 
 int create_gpg_data(gpgme_data_t *data, FILE *fp, char *str, int len, int COPY) {
