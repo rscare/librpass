@@ -1,0 +1,5 @@
+cmake_minimum_required (VERSION 2.8.5)
+project (rpass)
+add_library (rpass rpass.c)
+install (TARGETS rpass DESTINATION lib)
+install (FILES rpass.h DESTINATION include)
