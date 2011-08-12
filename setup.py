@@ -46,8 +46,35 @@ if os.name == 'posix':
         gtk_args = get_compiler_info("pkg-config --cflags --libs gtk+-2.0")
     except OSError:
         print("Unable to get library information for gtk+-2.0...using defaults.")
-        gtk_args['libraries'] = ['gtk-x11-2.0', 'gdk-x11-2.0', 'atk-1.0', 'gio-2.0', 'pangoft2-1.0', 'pangocairo-1.0', 'gdk_pixbuf-2.0', 'm', 'cairo', 'png14', 'pango-1.0', 'freetype', 'fontconfig', 'gobject-2.0', 'gmodule-2.0', 'gthread-2.0', 'rt', 'glib-2.0']
-        gtk_args['include_dirs'] = ['/usr/include/gtk-2.0', '/usr/lib/gtk-2.0/include', '/usr/include/atk-1.0', '/usr/include/cairo', '/usr/include/gdk-pixbuf-2.0', '/usr/include/pango-1.0', '/usr/include/glib-2.0', '/usr/lib/glib-2.0/include', '/usr/include/pixman-1', '/usr/include/freetype2', '/usr/include/libpng14']
+        gtk_args['libraries'] = ['gtk-x11-2.0',
+                                 'gdk-x11-2.0',
+                                 'atk-1.0',
+                                 'gio-2.0',
+                                 'pangoft2-1.0',
+                                 'pangocairo-1.0',
+                                 'gdk_pixbuf-2.0',
+                                 'm',
+                                 'cairo',
+                                 'png14',
+                                 'pango-1.0',
+                                 'freetype',
+                                 'fontconfig',
+                                 'gobject-2.0',
+                                 'gmodule-2.0',
+                                 'gthread-2.0',
+                                 'rt',
+                                 'glib-2.0']
+        gtk_args['include_dirs'] = ['/usr/include/gtk-2.0',
+                                    '/usr/lib/gtk-2.0/include',
+                                    '/usr/include/atk-1.0',
+                                    '/usr/include/cairo',
+                                    '/usr/include/gdk-pixbuf-2.0',
+                                    '/usr/include/pango-1.0',
+                                    '/usr/include/glib-2.0',
+                                    '/usr/lib/glib-2.0/include',
+                                    '/usr/include/pixman-1',
+                                    '/usr/include/freetype2',
+                                    '/usr/include/libpng14']
         gtk_args['library_dirs'] = []
 
     libraries.extend(gpgme_args["libraries"])
