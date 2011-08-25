@@ -3,3 +3,5 @@ tags
 *.pyc
 *.o
 *~
+TAGS
+build/

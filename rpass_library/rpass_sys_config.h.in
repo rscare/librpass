@@ -1,0 +1,7 @@
+#ifndef RPASS_SYS_CONFIG_H
+#define RPASS_SYS_CONFIG_H
+
+#cmakedefine USE_GTK2
+#cmakedefine USE_NCURSES
+
+#endif
