@@ -3,5 +3,6 @@
 
 #cmakedefine USE_GTK2
 #cmakedefine USE_NCURSES
+#cmakedefine RPASS_SUPPORT
 
 #endif

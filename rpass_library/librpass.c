@@ -6,7 +6,11 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <ncurses.h>
+
+#ifdef RPASS_SUPPORT
 #include <regex.h>
+#endif
+
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
@@ -19,6 +23,7 @@
 #include "getpassphrasencurses.h"
 #endif
 
+static gcry_error_t initializeEncryptionEngine();
 static gcry_error_t setupCipher();
 static gcry_error_t getKey();
 static gcry_error_t createKey(const char *passphrase);
@@ -27,8 +32,10 @@ static void report_gpg_error(gpg_error_t err);
 static void report_gcry_error(gcry_error_t err);
 static size_t getFileHandleSize(FILE *fh);
 
+#ifdef RPASS_SUPPORT
 static int regexMatcher(const char * const regex, const char * const string, const int flags);
 static void createRpassParentFromString(rpass_parent **parent, const char * acstr);
+#endif
 
 static int isdaemon = 0;
 
@@ -148,6 +155,7 @@ static gcry_error_t getKey() {
     return gcry_err;
 }
 
+#ifdef RPASS_SUPPORT
 int getRpassAccounts(const char * const acname, rpass_parent **parent,
                      const char * const filename, const int flags,
                      const char * const fields) {
@@ -189,7 +197,9 @@ int getRpassAccounts(const char * const acname, rpass_parent **parent,
 
     return 0;
 }
+#endif
 
+#ifdef RPASS_SUPPORT
 void searchStringForRpassParents(rpass_parent **parent, const char * const acname, const void * const fdata, const size_t fdata_size, const int flags) {
     const char *dend, *cur, *acstart, *acend;
     char *acname_copy;
@@ -254,7 +264,9 @@ void searchStringForRpassParents(rpass_parent **parent, const char * const acnam
         }
     }
 }
+#endif
 
+#ifdef RPASS_SUPPORT
 static void createRpassParentFromString(rpass_parent **parent, const char * const acstr) {
     const char *acstart, *acend, *cur, *tmp;
     rpass_entry *entry = NULL, *entry_ptr;
@@ -317,7 +329,9 @@ static void createRpassParentFromString(rpass_parent **parent, const char * cons
         }
     }
 }
+#endif
 
+#ifdef RPASS_SUPPORT
 void allocateRpassParent(rpass_parent **parent) {
     if (*parent != NULL)
         return;
@@ -360,7 +374,9 @@ void freeRpassEntries(rpass_entry *entry) {
     gcry_free(entry);
     entry = NULL;
 }
+#endif
 
+#ifdef RPASS_SUPPORT
 static int regexMatcher(const char * const regex, const char * const string, const int flags) {
     regex_t patt;
     int regex_flags = REG_EXTENDED|REG_NEWLINE|REG_NOSUB, err;
@@ -378,6 +394,7 @@ static int regexMatcher(const char * const regex, const char * const string, con
     regfree(&patt);
     return !err;
 }
+#endif
 
 gcry_error_t encryptFile(const char * const in_filename, const char * out_filename) {
     void *data;

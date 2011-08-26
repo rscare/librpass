@@ -15,6 +15,8 @@ endif (NOT CMAKE_BUILD_TYPE)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
+option(RPASS_SUPPORT "Compile in support for password storage/retrieval." ON)
+
 # Find libgcrypt
 find_package(Libgcrypt REQUIRED)
 include_directories(${LIBGCRYPT_INCLUDE_DIR})

@@ -47,8 +47,7 @@ enum {
     ALL_ACCOUNTS = 4
 };
 
-gcry_error_t initializeEncryptionEngine();
-
+#ifdef RPASS_SUPPORT
 int getRpassAccounts(const char * const acname, rpass_parent **parent,
                      const char * const filename, const int flags,
                      const char * const fields);
@@ -60,6 +59,7 @@ void allocateRpassEntry(rpass_entry **entry);
 void freeRpassParent(rpass_parent *parent);
 void freeRpassParents(rpass_parent *parent);
 void freeRpassEntries(rpass_entry *entry);
+#endif
 
 gcry_error_t encryptDataToFile(const void *data, size_t data_size, const char * const filename);
 gcry_error_t encryptFile(const char * const in_filename, const char * out_filename);
