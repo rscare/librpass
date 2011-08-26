@@ -1,4 +1,5 @@
 #include "rpass.h"
+#include "getpassphrasegtk.h"
 #include <gtk/gtk.h>
 #include <string.h>
 

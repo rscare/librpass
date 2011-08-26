@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     rpass_parent *parent;
 
     encryptDataToFile(TESTSTRING, strlen(TESTSTRING) + 1, OUTFILE);
-    decryptFile(OUTFILE, &data, &data_size);
+    decryptFileToData(OUTFILE, &data, &data_size);
     puts(data);
     gcry_free(data);
     getRpassAccounts("test", &parent, OUTFILE, REGEX|CASE_INSENSITIVE, "pass");

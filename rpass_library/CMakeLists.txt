@@ -1,11 +1,16 @@
 cmake_minimum_required (VERSION 2.8.5)
 project (rpass)
 
-SET (RPASS_LIBRARY_FILES librpass.c rpass.h getpassphrasegtk.h getpassphrasegtk.c getpassphrasencurses.h getpassphrasencurses.c)
+SET (RPASS_LIBRARY_FILES librpass.c rpass.h)
+SET (RPASS_LIBRARY_GTK_FILES getpassphrasegtk.h getpassphrasegtk.c)
+SET (RPASS_LIBRARY_NCURSES_FILES getpassphrasencurses.h getpassphrasencurses.c)
+SET (RPASS_PASSWORD_FILES password_functions.c password_functions.h)
 
-add_executable(testrpassd testrpassd.c ${RPASS_LIBRARY_FILES})
-add_executable(rpassd rpassd.cpp ${RPASS_LIBRARY_FILES})
-add_library (rpass ${RPASS_LIBRARY_FILES})
+add_executable(testrpassd testrpassd.c ${RPASS_LIBRARY_FILES} ${RPASS_LIBRARY_GTK_FILES} ${RPASS_LIBRARY_NCURSES_FILES} ${RPASS_PASSWORD_FILES})
+
+add_executable(rpassd rpassd.cpp rpassd_password.cpp rpassd_password.h  rpassd_signal_handlers.cpp rpassd_signal_handlers.h ${RPASS_LIBRARY_FILES} ${RPASS_LIBRARY_GTK_FILES} ${RPASS_LIBRARY_NCURSES_FILES} ${RPASS_PASSWORD_FILES})
+
+add_library (rpass ${RPASS_LIBRARY_FILES} ${RPASS_LIBRARY_GTK_FILES} ${RPASS_LIBRARY_NCURSES_FILES} ${RPASS_PASSWORD_FILES})
 
 include_directories("${PROJECT_BINARY_DIR}")
 

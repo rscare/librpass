@@ -1,6 +1,12 @@
 #ifndef RPASS_H
 #define RPASS_H
 
+#include "rpass_sys_config.h"
+
+#ifdef RPASS_SUPPORT
+#include "password_functions.h"
+#endif
+
 #include <stddef.h>
 #include <gcrypt.h>
 
@@ -22,53 +28,24 @@
 #define RPASS_DAEMON_MSG_DECRYPTFILE "DECRYPTFILE"
 #define RPASS_DAEMON_MSG_ENCRYPTFILE "ENCRYPTFILE"
 #define RPASS_DAEMON_MSG_ENCRYPTDATATOFILE "ENCRYPTDATATOFILE"
-#define RPASS_DAEMON_MSG_GETACCOUNTS "GETACCOUNTS"
 #define RPASS_DAEMON_MSG_STOP "STOP"
 
 #define RPASS_DAEMON_AC_START "RPASSDACSTART"
 
-struct __RPASS_ENTRY {
-    char *key, *value;
-    struct __RPASS_ENTRY *next_entry;
-};
-
-struct __RPASS_PARENT {
-    char *acname;
-    struct __RPASS_PARENT *next_parent;
-    struct __RPASS_ENTRY *first_entry;
-};
-
-typedef struct __RPASS_ENTRY rpass_entry;
-typedef struct __RPASS_PARENT rpass_parent;
-
-enum {
-    REGEX = 1,
-    CASE_INSENSITIVE = 2,
-    ALL_ACCOUNTS = 4
-};
-
-#ifdef RPASS_SUPPORT
-int getRpassAccounts(const char * const acname, rpass_parent **parent,
-                     const char * const filename, const int flags,
-                     const char * const fields);
-void searchStringForRpassParents(rpass_parent **parent, const char * const acname,
-                                 const void * const fdata, const size_t fdata_size,
-                                 const int flags);
-void allocateRpassParent(rpass_parent **parent);
-void allocateRpassEntry(rpass_entry **entry);
-void freeRpassParent(rpass_parent *parent);
-void freeRpassParents(rpass_parent *parent);
-void freeRpassEntries(rpass_entry *entry);
-#endif
+void constructDaemonString(void **msg, size_t * const msg_size,
+                           size_t totsize, int nargs, ...);
+void sendToDaemon(const void * const msg, const size_t msg_size,
+                         void **output, size_t *output_size);
 
 gcry_error_t encryptDataToFile(const void *data, size_t data_size, const char * const filename);
 gcry_error_t encryptFile(const char * const in_filename, const char * out_filename);
-gcry_error_t decryptFile(const char * const filename, void **data, size_t *data_size);
+gcry_error_t decryptFileToData(const char * const filename, void **data, size_t *data_size);
 
 void *attemptSecureAlloc(size_t N);
 
 void forgetCipher();
 
 void isDaemon();
+int amDaemon();
 
 #endif

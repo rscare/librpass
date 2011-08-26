@@ -1,6 +1,14 @@
 extern "C" {
 #include "rpass.h"
 }
+#include "rpass_sys_config.h"
+
+#ifdef RPASS_SUPPORT
+#include "rpassd_password.h"
+#endif
+
+#include "rpassd_signal_handlers.h"
+
 #include <unistd.h>
 #include <stddef.h>
 #include <sys/socket.h>
@@ -26,13 +34,7 @@ void daemonize();
 void close_std_fds();
 void setupSocket();
 
-string d_decryptFile(const vector<string> &filename);
-string d_encryptFile(const vector<string> &filenames);
-string d_getRpassAccounts(const vector<string> &options);
-
 vector<string> splitArgs(const string &args);
-
-string rparentsToString(const rpass_parent * const parent, const vector<string> &field);
 
 void setupOperators(map<string, OPERATOR_FUNCTION> &o);
 
@@ -63,32 +65,6 @@ void close_std_fds() {
     close(STDERR_FILENO);
 }
 
-string rparentsToString(const rpass_parent * const parent, const vector<string> &field) {
-    const rpass_parent * cur = parent;
-    const rpass_entry * rentry = NULL;
-    string retval = "";
-    while (cur) {
-        retval.append("[");
-        retval.append(parent->acname);
-        retval.append("]");
-
-        rentry = cur->first_entry;
-        while (rentry) {
-            if ((field.size() == 0) ||
-                (find(field.begin(), field.end(), string(rentry->key)) != field.end())) {
-                retval.append("\n");
-                retval.append(rentry->key);
-                retval.append(" = ");
-                retval.append(rentry->value);
-            }
-            rentry = rentry->next_entry;
-        }
-        retval.append("\n");
-        cur = cur->next_parent;
-    }
-    return retval;
-}
-
 vector<string> splitArgs(const string &args) {
     vector<string> parsed_args;
     stringstream ss(args);
@@ -97,81 +73,6 @@ vector<string> splitArgs(const string &args) {
         parsed_args.push_back(item);
     }
     return parsed_args;
-}
-
-void d_encryptDataToFile(const vector<string> &args, vector<char> &retval) {
-    string noerr = "NOERR";
-    string err = "ERR";
-    vector<string>::const_iterator i = args.begin();
-
-    string filename = *i;
-    string data = "";
-    for (++i; i < args.end(); ++i) {
-        data.append(i->data(), i->length()); data.append(" ");
-    }
-    data.erase(data.length() - 1);
-    encryptDataToFile(data.data(), data.length(), filename.c_str());
-    retval = vector<char>(noerr.begin(), noerr.end());
-}
-
-void d_decryptFile(const vector<string> &filename, vector<char> &retval) {
-    char *data = NULL;
-    size_t data_size;
-    decryptFile(filename[0].c_str(), (void **)&data, &data_size);
-    retval.resize(data_size);
-    copy(data, data + data_size, retval.begin());
-    gcry_free(data);
-}
-
-void d_encryptFile(const vector<string> &filenames, vector<char> &retval) {
-    string noerr = "NOERR";
-    string err = "ERR";
-
-    if (filenames.size() == 1) {
-        encryptFile(filenames[0].c_str(), NULL);
-        retval = vector<char>(noerr.begin(), noerr.end());
-    }
-    else if (filenames.size() == 2) {
-        encryptFile(filenames[0].c_str(), filenames[1].c_str());
-        retval = vector<char>(noerr.begin(), noerr.end());
-    }
-    retval = vector<char>(err.begin(), err.end());
-}
-
-void d_getRpassAccounts(const vector<string> &options, vector<char> &retval) {
-    vector<string>::const_iterator i = options.begin();
-    vector<string> fields;
-
-    // First argument is filename
-    string filename = *(i++);
-    // Second argument indicates start/end of searchstring
-    string search_start = *(i++);
-    string sstring = "";
-    for (; i < options.end(); ++i) {
-        if (*i != search_start) {
-            sstring.append(*i);
-            sstring.append(" ");
-        }
-        else
-            break;
-    }
-    sstring.erase(sstring.length() - 1); ++i;
-
-    int flags = *((int *)((i++)->data()));
-
-    for (; i < options.end(); ++i) {
-        fields.push_back(*i);
-    }
-
-    rpass_parent *parent;
-
-    getRpassAccounts(sstring.c_str(), &parent, filename.c_str(), flags, NULL);
-
-    string retstring = rparentsToString(parent, fields);
-    retval = vector<char>(retstring.begin(), retstring.end());
-    retval.push_back('\0');
-
-    freeRpassParents(parent);
 }
 
 void setupSocket() {
@@ -224,10 +125,12 @@ void setupSocket() {
 }
 
 void setupOperators(map<string, OPERATOR_FUNCTION> &o) {
-    o[RPASS_DAEMON_MSG_DECRYPTFILE] = d_decryptFile;
+    o[RPASS_DAEMON_MSG_DECRYPTFILE] = d_decryptFileToData;
     o[RPASS_DAEMON_MSG_ENCRYPTFILE] = d_encryptFile;
-    o[RPASS_DAEMON_MSG_GETACCOUNTS] = d_getRpassAccounts;
     o[RPASS_DAEMON_MSG_ENCRYPTDATATOFILE] = d_encryptDataToFile;
+#ifdef RPASS_SUPPORT
+    o[RPASS_DAEMON_MSG_GETACCOUNTS] = d_getRpassAccounts;
+#endif
 }
 
 int main(int argc, char *argv[]) {
