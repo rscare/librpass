@@ -33,6 +33,8 @@ int getRpassAccounts(const char * const acname, rpass_parent **parent,
 void searchStringForRpassParents(rpass_parent **parent, const char * const acname,
                                  const void * const fdata, const size_t fdata_size,
                                  const int flags);
+void createRpassParentFromString(rpass_parent **parent, const char * acstr);
+
 void allocateRpassParent(rpass_parent **parent);
 void allocateRpassEntry(rpass_entry **entry);
 void freeRpassParent(rpass_parent *parent);

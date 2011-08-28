@@ -122,7 +122,7 @@ void searchStringForRpassParents(rpass_parent **parent, const char * const acnam
     }
 }
 
-static void createRpassParentFromString(rpass_parent **parent, const char * const acstr) {
+void createRpassParentFromString(rpass_parent **parent, const char * const acstr) {
     const char *acstart, *acend, *cur, *tmp;
     rpass_entry *entry = NULL, *entry_ptr;
 
