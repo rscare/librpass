@@ -130,6 +130,7 @@ void setupOperators(map<string, OPERATOR_FUNCTION> &o) {
     o[RPASS_DAEMON_MSG_ENCRYPTDATATOFILE] = d_encryptDataToFile;
 #ifdef RPASS_SUPPORT
     o[RPASS_DAEMON_MSG_GETACCOUNTS] = d_getRpassAccounts;
+    o[RPASS_DAEMON_MSG_ADDACCOUNT] = d_addRpassAccount;
 #endif
 }
 

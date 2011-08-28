@@ -185,6 +185,85 @@ void createRpassParentFromString(rpass_parent **parent, const char * const acstr
     }
 }
 
+void addRpassParent(rpass_parent * const parent, const char * const filename) {
+    rpass_parent *rest;
+    char *parents_string;
+    void *msg;
+    size_t msg_size, tmp;
+    if (!amDaemon()) {
+        createStringFromRpassParent(parent, &parents_string);
+        tmp = strlen(RPASS_DAEMON_MSG_ADDACCOUNT)
+            + strlen(filename)
+            + strlen(parents_string);
+        constructDaemonString(&msg, &msg_size, tmp,
+                              3,
+                              RPASS_DAEMON_MSG_ADDACCOUNT, strlen(RPASS_DAEMON_MSG_ADDACCOUNT),
+                              filename, strlen(filename),
+                              parents_string, strlen(parents_string));
+        gcry_free(parents_string);
+        sendToDaemon(msg, msg_size, NULL, NULL);
+        free(msg);
+        return;
+    }
+    getRpassAccounts(NULL, &rest, filename, ALL_ACCOUNTS, NULL);
+    parent->next_parent = rest;
+    createStringFromRpassParents(parent, &parents_string);
+    encryptDataToFile(parents_string, strlen(parents_string) + 1, filename);
+    gcry_free(parents_string);
+    freeRpassParents(rest);
+}
+
+void createStringFromRpassParents(const rpass_parent * const parent, char **string) {
+    const rpass_parent *p = parent;
+    char *tmp, *p_string;
+    size_t string_size = 0;
+    while (p) {
+        string_size += calculateRparentStringSize(p);
+        p = p->next_parent;
+    }
+    *string = attemptSecureAlloc(++string_size);
+    tmp = *string;
+    p = parent;
+    while (p) {
+        createStringFromRpassParent(p, &p_string);
+        memcpy(tmp, p_string, strlen(p_string)); tmp += strlen(p_string);
+        gcry_free(p_string);
+    }
+    (*string)[string_size - 1] = '\0';
+}
+
+void createStringFromRpassParent(const rpass_parent * const parent, char **string) {
+    size_t string_size = calculateRparentStringSize(parent);
+    const rpass_entry *rentry;
+    char *tmp;
+
+    *string = attemptSecureAlloc(++string_size);
+    tmp = *string;
+    *(tmp++) = '[';
+    memcpy(tmp, parent->acname, strlen(parent->acname)); tmp += strlen(parent->acname);
+    *(tmp++) = ']'; *(tmp++) = '\n';
+
+    rentry = parent->first_entry;
+    while (rentry) {
+        memcpy(tmp, rentry->key, strlen(rentry->key)); tmp += strlen(rentry->key);
+        *(tmp++) = '=';
+        memcpy(tmp, rentry->value, strlen(rentry->value)); tmp += strlen(rentry->value);
+        rentry = rentry->next_entry;
+    }
+    (*string)[string_size - 1] = '\0';
+}
+
+static size_t calculateRparentStringSize(const rpass_parent * const parent) {
+    // DOES NOT INCLUDE NULL BYTE
+    rpass_entry *rentry = parent->first_entry;
+    size_t string_size = strlen(parent->acname) + 3; // two [] and \n
+    while (rentry) {
+        string_size += strlen(rentry->key) + strlen(rentry->value) + 2; // = and \n
+        rentry = rentry->next_entry;
+    }
+    return string_size;
+}
+
 void allocateRpassParent(rpass_parent **parent) {
     if (*parent != NULL)
         return;

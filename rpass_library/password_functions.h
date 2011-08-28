@@ -6,6 +6,7 @@
 #include <stdlib.h>
 
 #define RPASS_DAEMON_MSG_GETACCOUNTS "GETACCOUNTS"
+#define RPASS_DAEMON_MSG_ADDACCOUNT "ADDACCOUNT"
 
 struct __RPASS_ENTRY {
     char *key, *value;
@@ -34,6 +35,9 @@ void searchStringForRpassParents(rpass_parent **parent, const char * const acnam
                                  const void * const fdata, const size_t fdata_size,
                                  const int flags);
 void createRpassParentFromString(rpass_parent **parent, const char * acstr);
+void addRpassParent(rpass_parent * const parent, const char * const filename);
+void createStringFromRpassParents(const rpass_parent * const parent, char **string);
+void createStringFromRpassParent(const rpass_parent * const parent, char **string);
 
 void allocateRpassParent(rpass_parent **parent);
 void allocateRpassEntry(rpass_entry **entry);

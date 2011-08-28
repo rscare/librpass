@@ -44,6 +44,27 @@ void d_getRpassAccounts(const vector<string> &options, vector<char> &retval) {
     freeRpassParents(parent);
 }
 
+void d_addRpassAccount(const vector<string> &opts, vector<char> &retval) {
+    string err = "ERR";
+    string noerr = "NOERR";
+
+    vector<string>::const_iterator i = opts.begin();
+    // First arg is filename
+    string filename = *i;
+    string account = "";
+
+    for (; i < opts.end(); ++i) {
+        account.append(*i); account.append(" ");
+    }
+    account.erase(account.length() - 1);
+
+    rpass_parent *parent;
+    searchStringForRpassParents(&parent, NULL, (void *)account.data(), account.length(), ALL_ACCOUNTS);
+    addRpassParent(parent, filename.c_str());
+    freeRpassParents(parent);
+    retval = vector<char>(noerr.begin(), noerr.end());
+}
+
 string rparentsToString(const rpass_parent * const parent, const vector<string> &field) {
     const rpass_parent * cur = parent;
     const rpass_entry * rentry = NULL;
