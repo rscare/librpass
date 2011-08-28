@@ -9,19 +9,18 @@
 #include <string.h>
 
 static int regexMatcher(const char * const regex, const char * const string, const int flags);
-static void createRpassParentFromString(rpass_parent **parent, const char * acstr);
+static size_t calculateRparentStringSize(const rpass_parent * const parent);
 
 int getRpassAccounts(const char * const acname, rpass_parent **parent,
                      const char * const filename, const int flags,
                      const char * const fields) {
-    char *fdata; size_t fdata_size = 0, tmp, fields_size, msg_size;
+    char *fdata; size_t fdata_size = 0, tmp, fields_size, acname_size, msg_size;
     void *msg;
 
     if (!amDaemon()) {
         tmp = strlen(RPASS_DAEMON_MSG_GETACCOUNTS)
             + strlen(filename)
             + 2 * strlen(RPASS_DAEMON_AC_START)
-            + strlen(acname)
             + sizeof(int);
 
         if (fields == NULL)
@@ -29,19 +28,24 @@ int getRpassAccounts(const char * const acname, rpass_parent **parent,
         else
             fields_size = strlen(fields);
 
-        tmp += fields_size;
+        if (acname == NULL)
+            acname_size = 0;
+        else
+            acname_size = strlen(acname);
+
+        tmp += fields_size + acname_size;
         constructDaemonString(&msg, &msg_size, tmp,
                               7,
                               RPASS_DAEMON_MSG_GETACCOUNTS, strlen(RPASS_DAEMON_MSG_GETACCOUNTS),
                               filename, strlen(filename),
                               RPASS_DAEMON_AC_START, strlen(RPASS_DAEMON_AC_START),
-                              acname, strlen(acname),
+                              acname, acname_size,
                               RPASS_DAEMON_AC_START, strlen(RPASS_DAEMON_AC_START),
                               &flags, sizeof(int),
                               fields, fields_size);
         sendToDaemon(msg, msg_size, (void **)&fdata, &fdata_size);
         free(msg);
-        searchStringForRpassParents(parent, acname, fdata, fdata_size, flags);
+        searchStringForRpassParents(parent, NULL, fdata, fdata_size, ALL_ACCOUNTS);
         gcry_free(fdata);
         return 0;
     }
