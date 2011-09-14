@@ -39,7 +39,6 @@ void d_getRpassAccounts(const vector<string> &options, vector<char> &retval) {
 
     string retstring = rparentsToString(parent, fields);
     retval = vector<char>(retstring.begin(), retstring.end());
-    retval.push_back('\0');
 
     freeRpassParents(parent);
 }
@@ -50,7 +49,7 @@ void d_addRpassAccount(const vector<string> &opts, vector<char> &retval) {
 
     vector<string>::const_iterator i = opts.begin();
     // First arg is filename
-    string filename = *i;
+    string filename = *(i++);
     string account = "";
 
     for (; i < opts.end(); ++i) {
@@ -71,7 +70,7 @@ string rparentsToString(const rpass_parent * const parent, const vector<string> 
     string retval = "";
     while (cur) {
         retval.append("[");
-        retval.append(parent->acname);
+        retval.append(cur->acname);
         retval.append("]");
 
         rentry = cur->first_entry;
@@ -80,7 +79,7 @@ string rparentsToString(const rpass_parent * const parent, const vector<string> 
                 (find(field.begin(), field.end(), string(rentry->key)) != field.end())) {
                 retval.append("\n");
                 retval.append(rentry->key);
-                retval.append(" = ");
+                retval.append("=");
                 retval.append(rentry->value);
             }
             rentry = rentry->next_entry;
