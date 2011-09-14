@@ -208,9 +208,10 @@ void addRpassParent(rpass_parent * const parent, const char * const filename) {
     getRpassAccounts(NULL, &rest, filename, ALL_ACCOUNTS, NULL);
     parent->next_parent = rest;
     createStringFromRpassParents(parent, &parents_string);
-    encryptDataToFile(parents_string, strlen(parents_string) + 1, filename);
+    encryptDataToFile(parents_string, strlen(parents_string), filename);
     gcry_free(parents_string);
     freeRpassParents(rest);
+    parent->next_parent = NULL;
 }
 
 void createStringFromRpassParents(const rpass_parent * const parent, char **string) {
@@ -228,6 +229,7 @@ void createStringFromRpassParents(const rpass_parent * const parent, char **stri
         createStringFromRpassParent(p, &p_string);
         memcpy(tmp, p_string, strlen(p_string)); tmp += strlen(p_string);
         gcry_free(p_string);
+        p = p->next_parent;
     }
     (*string)[string_size - 1] = '\0';
 }
@@ -248,6 +250,7 @@ void createStringFromRpassParent(const rpass_parent * const parent, char **strin
         memcpy(tmp, rentry->key, strlen(rentry->key)); tmp += strlen(rentry->key);
         *(tmp++) = '=';
         memcpy(tmp, rentry->value, strlen(rentry->value)); tmp += strlen(rentry->value);
+        *(tmp++) = '\n';
         rentry = rentry->next_entry;
     }
     (*string)[string_size - 1] = '\0';
@@ -293,6 +296,8 @@ void freeRpassParent(rpass_parent *parent) {
 }
 
 void freeRpassParents(rpass_parent *parent) {
+    if (!parent)
+        return;
     if (parent->next_parent)
         freeRpassParents(parent->next_parent);
     freeRpassParent(parent);
