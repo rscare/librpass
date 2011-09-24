@@ -1,4 +1,3 @@
-#include "rpass_sys_config.h"
 #include "rpass.h"
 #include <gcrypt.h>
 #include <stdio.h>
@@ -27,8 +26,6 @@ static void report_gpg_error(gpg_error_t err);
 static void report_gcry_error(gcry_error_t err);
 static size_t getFileHandleSize(FILE *fh);
 
-static int isdaemon = 0;
-
 static gcry_cipher_hd_t HD;
 
 static size_t keylen, blklen;
@@ -38,72 +35,6 @@ static int haskey = 0, hascipher = 0;
 
 static gpg_error_t gpg_err;
 static gcry_error_t gcry_err;
-
-void constructDaemonString(void **msg, size_t * const msg_size,
-                                  size_t totsize, int nargs, ...) {
-    int spacecount = 0;
-    size_t tmp_size;
-    void *tmp, *msg_loc;
-    va_list argp;
-    va_start(argp, nargs);
-
-    *msg_size = totsize + (nargs - 1);
-    msg_loc = (*msg = malloc(*msg_size));
-    for (;nargs > 0; --nargs) {
-        tmp = va_arg(argp, void *); tmp_size = va_arg(argp, size_t);
-        memcpy(msg_loc, tmp, tmp_size);
-        msg_loc += tmp_size;
-        if (nargs > 1)
-            *((char *)(msg_loc++)) = ' ';
-    }
-
-    va_end(argp);
-}
-
-void sendToDaemon(const void * const msg, const size_t msg_size, void **output, size_t *output_size) {
-    unsigned int s = socket(AF_UNIX, SOCK_STREAM, 0);
-    struct sockaddr_un remote;
-    size_t read_size;
-    char buf[BUFSIZ];
-
-    remote.sun_family = AF_UNIX;
-    strcpy(remote.sun_path, SOCKET_NAME);
-
-    connect(s, (struct sockaddr *)&remote, sizeof(remote.sun_family) + strlen(remote.sun_path));
-
-    send(s, msg, msg_size, 0);
-
-    if (output_size != NULL) {
-        *output = NULL;
-        *output_size = 0;
-        while ((read_size = recv(s, buf, BUFSIZ, 0)) > 0) {
-            if (*output == NULL) {
-                *output = attemptSecureAlloc(read_size);
-                *output_size = read_size;
-            }
-            else {
-                *output_size += read_size;
-                *output = gcry_realloc(*output, *output_size);
-            }
-            memcpy((*output + *output_size - read_size), buf, read_size);
-            if (read_size < BUFSIZ)
-                break;
-        }
-    }
-    else
-        while(recv(s, buf, BUFSIZ, 0) > 0)
-            ;
-    close(s);
-}
-
-void isDaemon() {
-    // Tell the library this is the daemon
-    isdaemon = 1;
-}
-
-int amDaemon() {
-    return isdaemon;
-}
 
 void * attemptSecureAlloc(size_t N) {
     initializeEncryptionEngine();
@@ -158,18 +89,6 @@ gcry_error_t encryptFile(const char * const in_filename, const char * out_filena
     if (out_filename == NULL)
         out_filename = in_filename;
 
-    if (!isdaemon) {
-        constructDaemonString(&msg, &data_size,
-                              strlen(RPASS_DAEMON_MSG_ENCRYPTFILE) + strlen(in_filename) + strlen(out_filename),
-                              3,
-                              RPASS_DAEMON_MSG_ENCRYPTFILE, strlen(RPASS_DAEMON_MSG_ENCRYPTFILE),
-                              in_filename, strlen(in_filename),
-                              out_filename, strlen(out_filename));
-        sendToDaemon((void *)msg, data_size, NULL, NULL);
-        free(msg);
-        return GPG_ERR_NO_ERROR;
-    }
-
     FILE * fh = fopen(in_filename, "rb");
 
     data_size = getFileHandleSize(fh) + 1;
@@ -189,18 +108,6 @@ gcry_error_t encryptDataToFile(const void * data, size_t data_size, const char *
     size_t remain, nsize;
     FILE *fh;
     void *msg, *tmp;
-
-    if (!isdaemon) {
-        constructDaemonString(&msg, &nsize,
-                              strlen(RPASS_DAEMON_MSG_ENCRYPTDATATOFILE) + strlen(filename) + data_size,
-                              3,
-                              RPASS_DAEMON_MSG_ENCRYPTDATATOFILE, strlen(RPASS_DAEMON_MSG_ENCRYPTDATATOFILE),
-                              filename, strlen(filename),
-                              data, data_size);
-        sendToDaemon(msg, nsize, NULL, NULL);
-        free(msg);
-        return GPG_ERR_NO_ERROR;
-    }
 
     if ((gcry_err = initializeEncryptionEngine()) != GPG_ERR_NO_ERROR) {
         report_gcry_error(gcry_err);
@@ -268,17 +175,6 @@ gcry_error_t decryptFileToData(const char * const filename, void **pdata, size_t
     size_t data_size;
     char extra_data;
     void *msg;
-
-    if (!isdaemon) {
-        constructDaemonString(&msg, &data_size,
-                              strlen(RPASS_DAEMON_MSG_DECRYPTFILE) + strlen(filename),
-                              2,
-                              RPASS_DAEMON_MSG_DECRYPTFILE, strlen(RPASS_DAEMON_MSG_DECRYPTFILE),
-                              filename, strlen(filename));
-        sendToDaemon((void *)msg, data_size, pdata, pdata_size);
-        free(msg);
-        return GPG_ERR_NO_ERROR;
-    }
 
     if ((gcry_err = initializeEncryptionEngine()) != GPG_ERR_NO_ERROR) {
         report_gcry_error(gcry_err);

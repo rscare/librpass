@@ -17,39 +17,6 @@ int getRpassAccounts(const char * const acname, rpass_parent **parent,
     char *fdata; size_t fdata_size = 0, tmp, fields_size, acname_size, msg_size;
     void *msg;
 
-    if (!amDaemon()) {
-        tmp = strlen(RPASS_DAEMON_MSG_GETACCOUNTS)
-            + strlen(filename)
-            + 2 * strlen(RPASS_DAEMON_AC_START)
-            + sizeof(int);
-
-        if (fields == NULL)
-            fields_size = 0;
-        else
-            fields_size = strlen(fields);
-
-        if (acname == NULL)
-            acname_size = 0;
-        else
-            acname_size = strlen(acname);
-
-        tmp += fields_size + acname_size;
-        constructDaemonString(&msg, &msg_size, tmp,
-                              7,
-                              RPASS_DAEMON_MSG_GETACCOUNTS, strlen(RPASS_DAEMON_MSG_GETACCOUNTS),
-                              filename, strlen(filename),
-                              RPASS_DAEMON_AC_START, strlen(RPASS_DAEMON_AC_START),
-                              acname, acname_size,
-                              RPASS_DAEMON_AC_START, strlen(RPASS_DAEMON_AC_START),
-                              &flags, sizeof(int),
-                              fields, fields_size);
-        sendToDaemon(msg, msg_size, (void **)&fdata, &fdata_size);
-        free(msg);
-        searchStringForRpassParents(parent, NULL, fdata, fdata_size, ALL_ACCOUNTS);
-        gcry_free(fdata);
-        return 0;
-    }
-
     decryptFileToData(filename, (void **)&fdata, &fdata_size);
     searchStringForRpassParents(parent, acname, fdata, fdata_size, flags);
     gcry_free(fdata);
@@ -190,21 +157,7 @@ void addRpassParent(rpass_parent * const parent, const char * const filename) {
     char *parents_string;
     void *msg;
     size_t msg_size, tmp;
-    if (!amDaemon()) {
-        createStringFromRpassParent(parent, &parents_string);
-        tmp = strlen(RPASS_DAEMON_MSG_ADDACCOUNT)
-            + strlen(filename)
-            + strlen(parents_string);
-        constructDaemonString(&msg, &msg_size, tmp,
-                              3,
-                              RPASS_DAEMON_MSG_ADDACCOUNT, strlen(RPASS_DAEMON_MSG_ADDACCOUNT),
-                              filename, strlen(filename),
-                              parents_string, strlen(parents_string));
-        gcry_free(parents_string);
-        sendToDaemon(msg, msg_size, NULL, NULL);
-        free(msg);
-        return;
-    }
+
     getRpassAccounts(NULL, &rest, filename, ALL_ACCOUNTS, NULL);
     parent->next_parent = rest;
     createStringFromRpassParents(parent, &parents_string);
