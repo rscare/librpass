@@ -1,15 +1,12 @@
 cmake_minimum_required (VERSION 2.8.5)
-project (rpass)
+project (librpass)
 
 SET (RPASS_LIBRARY_FILES librpass.c rpass.h)
 SET (RPASS_LIBRARY_GTK_FILES getpassphrasegtk.h getpassphrasegtk.c)
 SET (RPASS_LIBRARY_NCURSES_FILES getpassphrasencurses.h getpassphrasencurses.c)
 SET (RPASS_PASSWORD_FILES password_functions.c password_functions.h)
 
-
-add_executable(rpassd rpassd.cpp rpassd_password.cpp rpassd_password.h  rpassd_signal_handlers.cpp rpassd_signal_handlers.h ${RPASS_LIBRARY_FILES} ${RPASS_LIBRARY_GTK_FILES} ${RPASS_LIBRARY_NCURSES_FILES} ${RPASS_PASSWORD_FILES})
-
-add_library (rpass ${RPASS_LIBRARY_FILES} ${RPASS_LIBRARY_GTK_FILES} ${RPASS_LIBRARY_NCURSES_FILES} ${RPASS_PASSWORD_FILES})
+add_library (rpass SHARED ${RPASS_LIBRARY_FILES} ${RPASS_LIBRARY_GTK_FILES} ${RPASS_LIBRARY_NCURSES_FILES} ${RPASS_PASSWORD_FILES})
 
 include_directories("${PROJECT_BINARY_DIR}")
 
@@ -17,7 +14,7 @@ if (NOT CMAKE_BUILD_TYPE)
   set (CMAKE_BUILD_TYPE Debug)
 endif (NOT CMAKE_BUILD_TYPE)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/../cmake/Modules/")
 
 option(RPASS_SUPPORT "Compile in support for password storage/retrieval." ON)
 
@@ -28,6 +25,7 @@ set(RPASS_LIBRARIES ${RPASS_LIBRARIES} ${LIBGCRYPT_LIBRARIES})
 
 # Find libncurses
 option(USE_NCURSES "Attempt to use ncurses" ON)
+
 if (USE_NCURSES)
   set (CURSES_NEED_NCURSES TRUE)
   find_package(Curses)
@@ -46,7 +44,6 @@ option(USE_GTK2 "Attempt to use GTK2" ON)
 
 if (USE_GTK2)
   find_package(GTK2 COMPONENTS gtk)
-
   if (GTK2_FOUND)
     message (STATUS "Using GTK2...")
     include_directories(${GTK2_INCLUDE_DIRS})
@@ -62,7 +59,5 @@ configure_file(
   "${PROJECT_BINARY_DIR}/rpass_sys_config.h"
   )
 
-target_link_libraries(rpassd ${RPASS_LIBRARIES})
-
 install (TARGETS rpass DESTINATION lib)
-install (FILES rpass.h DESTINATION include)
+install (FILES rpass.h ${PROJECT_BINARY_DIR}/rpass_sys_config.h password_functions.h DESTINATION include)
