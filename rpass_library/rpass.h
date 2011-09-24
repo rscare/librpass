@@ -45,7 +45,4 @@ void *attemptSecureAlloc(size_t N);
 
 void forgetCipher();
 
-void isDaemon();
-int amDaemon();
-
 #endif

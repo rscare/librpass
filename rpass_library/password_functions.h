@@ -1,7 +1,6 @@
 #ifndef PASSWORD_FUNCTIONS_H
 #define PASSWORD_FUNCTIONS_H
 
-#include "rpass_sys_config.h"
 #include "rpass.h"
 #include <stdlib.h>
 
