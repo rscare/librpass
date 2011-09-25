@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-def PrintAccountInfo(acinfo, keys, color, pfull = False, batch = False):
+def PrintAccountInfo(raccount, keys, color, pfull = False, batch = False):
     fgnescape = '\x1b[0;38;5;{0}m'
     bgnescape = '\x1b[0;48;5;{0}m'
     fgbescape = '\x1b[1;38;5;{0}m'
@@ -16,40 +16,41 @@ def PrintAccountInfo(acinfo, keys, color, pfull = False, batch = False):
         pass_color = fgnescape.format(9)
         txtreset = '\x1b[0m'
 
-    for ac in sorted(acinfo.keys()):
-        if batch:
-            if 'acname' in keys:
-                print(ac)
-            for (k, v) in acinfo[ac].items():
-                if k in keys:
-                    print(v)
-        else:
-            if ('user' in acinfo[ac]) and ('user' in keys):
-                print("{0}{1} - {2}{3}".format(ac_color, ac, user_color, acinfo[ac]['user']))
-            else: print("{0}{1}".format(ac_color, ac))
+    if batch:
+        print(raccount.name)
+        for (k, v) in raccount.fields.items():
+            if k in keys:
+                print(v)
 
-            if ('pass' in keys) and ('pass' in acinfo[ac]):
-                print("\t{0}{1}".format(pass_color, acinfo[ac]['pass']))
+    else:
+        if ('user' in keys) and ('user' in raccount.fields):
+            print("{0}{1} - {2}{3}".format(ac_color, raccount.name, user_color, raccount.fields['user']))
+        else: print("{0}{1}".format(ac_color, raccount.name))
 
-            print(txtreset, end='')
+        if ('pass' in keys) and ('pass' in raccount.fields):
+            print("\t{0}{1}".format(pass_color, raccount.fields['pass']))
 
-            minlen = 0
-            if 'user' in keys: minlen += 1
-            if 'pass' in keys: minlen += 1
+        print(txtreset, end='')
 
-            if len(keys) > minlen:
-                for (k, v) in acinfo[ac].items():
-                    if (k not in ['user', 'pass']) and (k in keys):
-                        print("\t{0}: {1}".format(k, v))
-            elif pfull:
-                for (k, v) in acinfo[ac].items():
-                    if k not in ['user', 'pass']:
-                        print("\t{0}: {1}".format(k, v))
+        if ('user' in keys): keys.remove('user')
+        if ('pass' in keys): keys.remove('pass')
+
+        if len(keys) > 0:
+            for (k, v) in raccount.fields.items():
+                if (k not in ['user', 'pass']) and (k in keys):
+                    print("\t{0}: {1}".format(k, v))
+                elif pfull:
+                    for (k, v) in raccount.fields.items():
+                        if k not in ['user', 'pass']:
+                            print("\t{0}: {1}".format(k, v))
 
 def CreateEntry(acname = None):
+    from rpass import rpass_account
+    raccount = rpass_account()
+
     if not(acname): acname = input("Account name: ")
 
-    acinfo = {}
+    raccount.name = acname
 
     usr = input("{0}: User - leave blank to remove field: ".format(acname))
 
@@ -57,9 +58,9 @@ def CreateEntry(acname = None):
     pwrd = gp("{0}: Password - leave blank to remove field (typed letters do not appear): ".format(acname))
 
     if usr.strip():
-        acinfo['user'] = usr
+        raccount.fields['user'] = usr
     if pwrd.strip():
-        acinfo['pass'] = pwrd
+        raccount.fields['pass'] = pwrd
 
     response = input("Would you like to add additional fields to the entry? [N/y] ")
     if response != '' and response.lower()[0] == 'y':
@@ -70,11 +71,11 @@ def CreateEntry(acname = None):
             if field in ["password", "p", "pass"]:
                 from getpass import getpass as gp
                 field = "pass"
-                acinfo[field] = gp("{0}: ".format(field))
+                raccount.fields[field] = gp("{0}: ".format(field))
             else:
-                acinfo[field] = input("{0}: ".format(field))
+                raccount.fields[field] = input("{0}: ".format(field))
             field = input("{0}: Field: ".format(acname))
-    return (acname, acinfo)
+    return raccount
 
 def GetOptions():
     """Gets options from user through configuration file and commandline."""
@@ -120,7 +121,7 @@ def GetOptions():
 
     parser.add_option('-f', '--password-file', dest = 'pass_file',
             action = 'store', type = 'string',
-            help = "Specify a password file other than the default [~/.passwords.gpg].")
+            help = "Specify a password file other than the default [~/.rpasswords].")
 
     parser.add_option("-C", "--config-file", dest="conf_file",
             action = "store", type = "string",
@@ -155,27 +156,20 @@ def GetOptions():
     if options.print_users: fops['fields'].append('user')
     if options.print_pass: fops['fields'].extend(["pass"])
 
-    if options.pass_file: 
+    if options.pass_file:
         from os.path import expanduser
         fops['passfile'] = expanduser(options.pass_file)
     if 'passfile' not in fops: fops['passfile'] = None
 
     return (fops, args)
 
-if __name__=="__main__":
-    from rpass import rpass
-    from rpass import InvalidEncryptionKey,ExistingEntry
-    from rGPG import rGPGError
+def run_rpass_interface():
+    from rpass import rpass_password_manager
+    from os.path import isfile
 
     (options, args) = GetOptions()
 
-    try:
-        account = rpass(conf_file = options['conf_file'], passfile = options['passfile'], executable = True)
-    except rGPGError:
-        print("rpass decryption failed.")
-        if options['login']: exit(1)
-    else:
-        if options['login']: exit(0)
+    account = rpass_password_manager(conf_file = options['conf_file'], passfile = options['passfile'])
 
     if 'color' not in options:
         if 'color' in account.options:
@@ -189,56 +183,55 @@ if __name__=="__main__":
 
     if options['fields'] == [None]: options['fields'] = []
 
-    if account.first:
+    if not(isfile(account.passfile)):
         response = input("No password file at {0} found. Would you like to create it (note: please don't create this file manually)? [Y/n] ".format(account.passfile))
 
         if response != '' and response.lower()[0] == 'n':
             print("No password file created...Exiting.")
             exit()
+        else:
+            f = open(account.passfile, 'w')
+            f.close()
 
         if options['new_entry'] and len(args) > 0:
-            for arg in args: account.AddEntry(*CreateEntry(arg))
-        else: account.AddEntry(*CreateEntry())
+            for arg in args: account.AddEntry(CreateEntry(arg))
+        else: account.AddEntry(CreateEntry())
 
-        account.Write()
         exit()
 
     if options['new_entry']:
-        try:
-            if len(args) > 0:
-                for arg in args: account.AddEntry(*CreateEntry(arg))
-            else: account.AddEntry(*CreateEntry())
-            account.Write()
-        except ExistingEntry:
-            print("Entry exists...aborting addition.")
-
+        if len(args) > 0:
+            for arg in args: account.AddEntry(CreateEntry(arg))
+        else: account.AddEntry(CreateEntry())
         exit()
 
     elif options['del_entry']:
-        try:
-            if len(args) > 0:
-                for arg in args: account.DeleteEntry(entry = arg)
-                account.Write()
-            else: print ("Please specify entry or entries to delete.")
-        except NonExistentEntry:
-            print("One of your entries does not exist. Deleting operation aborted.")
+        if len(args) > 0:
+            for arg in args: account.DeleteEntry(sstring = arg)
+        else: print ("Please specify entry or entries to delete.")
         exit()
 
     else:
-        acinfo = {}
+        aclist = []
         pfull = False
 
         if len(args) > 0:
             pfull = True
-            for arg in args: 
-                acinfo.update(account.GetAccountInfo(account = arg, strict = options['batch']))
+            for arg in args:
+                flags = 0
+                if (not(options['batch'])):
+                    flags = rpass_password_manager.REGEX|rpass_password_manager.CASE_INSENSITIVE
+                aclist.extend(account.GetAccounts(sstring = arg, flags = flags))
             # Copy passwords...
             if not(options['batch']) and options['copy']:
                 try:
-                    account.CopyPass(acinfo=acinfo)
+                    for ac in aclist:
+                        if (account.CopyPass(ac)): break
                 except OSError:
                     print("'xclip' not found. Please install xclip to automatically copy first matched password to clipboard (avoid printing passwords).")
                     print("To see passwords, run rpass with the --passwords option.\n")
         else:
-            acinfo = account.entries
-        PrintAccountInfo(acinfo=acinfo, pfull = pfull, color = options['color'], keys = options['fields'], batch = options['batch'])
+            aclist = account.GetAccounts(sstring = '', flags = rpass_password_manager.ALL_ACCOUNTS)
+
+        for ac in aclist:
+            PrintAccountInfo(raccount=ac, pfull = pfull, color = options['color'], keys = options['fields'], batch = options['batch'])

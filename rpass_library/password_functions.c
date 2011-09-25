@@ -154,17 +154,47 @@ void createRpassParentFromString(rpass_parent **parent, const char * const acstr
 
 void addRpassParent(rpass_parent * const parent, const char * const filename) {
     rpass_parent *rest;
-    char *parents_string;
     void *msg;
     size_t msg_size, tmp;
 
     getRpassAccounts(NULL, &rest, filename, ALL_ACCOUNTS, NULL);
     parent->next_parent = rest;
+    writeRpassParentsToFile(parent, filename);
+    freeRpassParents(rest);
+    parent->next_parent = NULL;
+}
+
+void writeRpassParentsToFile(rpass_parent *parent, const char * const filename) {
+    char *parents_string;
+
     createStringFromRpassParents(parent, &parents_string);
     encryptDataToFile(parents_string, strlen(parents_string), filename);
     gcry_free(parents_string);
-    freeRpassParents(rest);
-    parent->next_parent = NULL;
+}
+
+void deleteRpassParent(const char * const acname, const char * const filename) {
+    rpass_parent *accounts, *tmp, *prev;
+
+    getRpassAccounts(NULL, &accounts, filename, ALL_ACCOUNTS, NULL);
+
+    tmp = accounts;
+    prev = NULL;
+
+    while(tmp) {
+        if (!strcmp(acname, tmp->acname)) {
+            if (prev)
+                prev->next_parent = tmp->next_parent;
+            else
+                accounts = tmp->next_parent;
+            freeRpassParent(tmp);
+            break;
+        }
+        prev = tmp;
+        tmp = tmp->next_parent;
+    }
+
+    writeRpassParentsToFile(accounts, filename);
+    freeRpassParents(accounts);
 }
 
 void createStringFromRpassParents(const rpass_parent * const parent, char **string) {

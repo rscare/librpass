@@ -197,6 +197,12 @@ gcry_error_t decryptFileToData(const char * const filename, void **pdata, size_t
 
     fsize = getFileHandleSize(fh);
 
+    if (fsize < blklen) {
+        *pdata = NULL;
+        *pdata_size = 0;
+        return GPG_ERR_NO_ERROR;
+    }
+
     data_size = fsize - blklen;
     if ((*pdata = attemptSecureAlloc(data_size)) == NULL) {
         gcry_free(IV);
