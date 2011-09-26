@@ -29,6 +29,8 @@
 #define RPASS_DAEMON_MSG_ENCRYPTFILE "ENCRYPTFILE"
 #define RPASS_DAEMON_MSG_ENCRYPTDATATOFILE "ENCRYPTDATATOFILE"
 #define RPASS_DAEMON_MSG_STOP "STOP"
+#define RPASS_DAEMON_MSG_FORGETCIPHER "FORGETCIPHER"
+#define RPASS_DAEMON_MSG_CHANGEPASSPHRASE "CHANGEPASSPHRASE"
 
 #define RPASS_DAEMON_AC_START "RPASSDACSTART"
 
@@ -40,6 +42,7 @@ void sendToDaemon(const void * const msg, const size_t msg_size,
 gcry_error_t encryptDataToFile(const void *data, size_t data_size, const char * const filename);
 gcry_error_t encryptFile(const char * const in_filename, const char * out_filename);
 gcry_error_t decryptFileToData(const char * const filename, void **data, size_t *data_size);
+gcry_error_t changePassphrase(const char * const filename);
 
 void *attemptSecureAlloc(size_t N);
 

@@ -1,4 +1,0 @@
-#!/usr/bin/python
-
-from rpass_interface import run_rpass_interface
-run_rpass_interface()

@@ -298,7 +298,20 @@ static int engineInitialized() {
 }
 
 void forgetCipher() {
-    gcry_cipher_close(HD);
+    if (hascipher)
+        gcry_cipher_close(HD);
     haskey = 0;
     hascipher = 0;
+}
+
+gcry_error_t changePassphrase(const char * const filename) {
+    void *data; size_t data_size;
+
+    decryptFileToData(filename, &data, &data_size);
+    forgetCipher();
+    encryptDataToFile(data, data_size, filename);
+
+    gcry_free(data);
+
+    return GPG_ERR_NO_ERROR;
 }

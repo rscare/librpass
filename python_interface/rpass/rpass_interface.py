@@ -45,7 +45,7 @@ def PrintAccountInfo(raccount, keys, color, pfull = False, batch = False):
                             print("\t{0}: {1}".format(k, v))
 
 def CreateEntry(acname = None):
-    from rpass import rpass_account
+    from .rpass import rpass_account
     raccount = rpass_account()
 
     if not(acname): acname = input("Account name: ")
@@ -135,6 +135,14 @@ def GetOptions():
             action = "count", default = 0,
             help = "Disable color printing [default].")
 
+    parser.add_option('-F', '--forgetcipher', dest='forget_cipher',
+                      action='store_true', default=False,
+                      help='Causes daemon to forget cipher, asking to retype password.')
+
+    parser.add_option('-P', '--change-passphrase', dest='change_pass',
+                      action='store_true', default=False,
+                      help='Changes passphrase for current password file.')
+
     (options, args) = parser.parse_args()
 
     fops = {}
@@ -161,10 +169,13 @@ def GetOptions():
         fops['passfile'] = expanduser(options.pass_file)
     if 'passfile' not in fops: fops['passfile'] = None
 
+    fops['forget_cipher'] = options.forget_cipher;
+    fops['change_pass'] = options.change_pass;
+
     return (fops, args)
 
-def run_rpass_interface():
-    from rpass import rpass_password_manager
+def run():
+    from .rpass import rpass_password_manager
     from os.path import isfile
 
     (options, args) = GetOptions()
@@ -209,6 +220,14 @@ def run_rpass_interface():
         if len(args) > 0:
             for arg in args: account.DeleteEntry(sstring = arg)
         else: print ("Please specify entry or entries to delete.")
+        exit()
+
+    elif options['change_pass']:
+        account.ChangePass()
+        exit()
+
+    elif options['forget_cipher']:
+        account.ForgetCipher()
         exit()
 
     else:

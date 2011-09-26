@@ -108,6 +108,17 @@ class rpass:
 
         self.__talkToDaemon(message)
 
+    def ForgetCipher(self):
+        self.__talkToDaemon("FORGETCIPHER")
+
+    def ChangePassphrase(self, filename):
+        from os.path import isfile, expanduser
+        filename = expanduser(filename)
+        if not(isfile(filename)): raise IOError("File not found.")
+
+        message = "CHANGEPASSPHRASE {0}".format(filename)
+        self.__talkToDaemon(message)
+
 class rpass_password_manager(rpass):
     """Class to manage preferences."""
 
@@ -142,6 +153,9 @@ class rpass_password_manager(rpass):
 
     def DeleteEntry(self, sstring):
         return rpass.DeleteRpassAccount(self, self.passfile, sstring)
+
+    def ChangePass(self):
+        return rpass.ChangePassphrase(self, self.passfile)
 
     def ReadConfigFile(self, filename, info = {}):
         """When passed a filename, reads the config file for rpass information.
