@@ -61,3 +61,5 @@ configure_file(
 
 install (TARGETS rpass LIBRARY DESTINATION lib)
 install (FILES rpass.h ${PROJECT_BINARY_DIR}/rpass_sys_config.h password_functions.h DESTINATION include)
+
+install (FILES ${CMAKE_SOURCE_DIR}/cmake/Modules/FindLibgcrypt.cmake ${CMAKE_SOURCE_DIR}/cmake/Modules/FindLibrpass.cmake DESTINATION ${CMAKE_ROOT}/Modules)
