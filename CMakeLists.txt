@@ -1,7 +1,11 @@
 cmake_minimum_required (VERSION 2.8.5)
 project (librpass)
 
-include("${CMAKE_SOURCE_DIR}/../cmake/rpass.cmake")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/../cmake/Modules/")
+
+if (NOT CMAKE_BUILD_TYPE)
+  set (CMAKE_BUILD_TYPE Release)
+endif (NOT CMAKE_BUILD_TYPE)
 
 SET (RPASS_LIBRARY_FILES librpass.c rpass.h)
 SET (RPASS_LIBRARY_GTK_FILES getpassphrasegtk.h getpassphrasegtk.c)
