@@ -17,7 +17,8 @@ def PrintAccountInfo(raccount, keys, color, pfull = False, batch = False):
         txtreset = '\x1b[0m'
 
     if batch:
-        print(raccount.name)
+        if ('acname' in keys):
+            print(raccount.name)
         for (k, v) in raccount.fields.items():
             if k in keys:
                 print(v)
