@@ -34,11 +34,6 @@
 
 #define RPASS_DAEMON_AC_START "RPASSDACSTART"
 
-void constructDaemonString(void **msg, size_t * const msg_size,
-                           size_t totsize, int nargs, ...);
-void sendToDaemon(const void * const msg, const size_t msg_size,
-                         void **output, size_t *output_size);
-
 gcry_error_t encryptDataToFile(const void *data, size_t data_size, const char * const filename);
 gcry_error_t encryptFile(const char * const in_filename, const char * out_filename);
 gcry_error_t decryptFileToData(const char * const filename, void **data, size_t *data_size);
