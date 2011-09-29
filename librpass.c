@@ -130,12 +130,12 @@ gcry_error_t encryptDataToFile(const void * data, size_t data_size, const char *
     }
     else
         nsize = data_size + 1;
+
+    nsize += blklen; // Added for IV
+
     if ((ndata = attemptSecureAlloc(nsize)) == NULL) {
         return GPG_ERR_GENERAL;
     }
-
-    memcpy(ndata, data, data_size);
-    memset(ndata + data_size, (char)(nsize - data_size), nsize - data_size);
 
     IV = gcry_random_bytes_secure(blklen, GCRY_STRONG_RANDOM);
 
@@ -147,6 +147,11 @@ gcry_error_t encryptDataToFile(const void * data, size_t data_size, const char *
         report_gcry_error(gcry_err);
         return gcry_err;
     }
+
+    memcpy(ndata, IV, blklen);
+    memcpy(ndata + blklen, data, data_size);
+    memset(ndata + blklen + data_size, (char)(nsize - data_size - blklen), nsize - data_size - blklen);
+
     if ((gcry_err = gcry_cipher_encrypt(HD, ndata, nsize, NULL, 0)) != GPG_ERR_NO_ERROR) {
         gcry_free(ndata);
         gcry_free(IV);
@@ -174,7 +179,7 @@ gcry_error_t decryptFileToData(const char * const filename, void **pdata, size_t
     long fsize;
     size_t data_size;
     char extra_data;
-    void *msg;
+    void *msg, *tmp_data;
 
     if ((gcry_err = initializeEncryptionEngine()) != GPG_ERR_NO_ERROR) {
         report_gcry_error(gcry_err);
@@ -204,38 +209,51 @@ gcry_error_t decryptFileToData(const char * const filename, void **pdata, size_t
     }
 
     data_size = fsize - blklen;
-    if ((*pdata = attemptSecureAlloc(data_size)) == NULL) {
+    if ((tmp_data = attemptSecureAlloc(data_size)) == NULL) {
         gcry_free(IV);
 
         return GPG_ERR_NO_ERROR;
     }
 
     fread(IV, sizeof(char), blklen, fh);
-    fread(*pdata, sizeof(char), data_size, fh);
+    fread(tmp_data, sizeof(char), data_size, fh);
     fclose(fh);
 
     if ((gcry_err = gcry_cipher_setiv(HD, IV, blklen)) != GPG_ERR_NO_ERROR) {
         gcry_free(IV);
-        gcry_free(*pdata);
+        gcry_free(tmp_data);
         *pdata = NULL;
 
         report_gcry_error(gcry_err);
         return gcry_err;
     }
-    if ((gcry_err = gcry_cipher_decrypt(HD, *pdata, data_size, NULL, 0)) != GPG_ERR_NO_ERROR) {
+    if ((gcry_err = gcry_cipher_decrypt(HD, tmp_data, data_size, NULL, 0)) != GPG_ERR_NO_ERROR) {
         gcry_free(IV);
-        gcry_free(*pdata);
+        gcry_free(tmp_data);
         *pdata = NULL;
 
         report_gcry_error(gcry_err);
         return gcry_err;
+    }
+
+    if (memcmp(IV, tmp_data, blklen) != 0) {
+        // Decryption error
+        gcry_free(IV);
+        gcry_free(tmp_data);
+        *pdata = NULL;
+        forgetCipher();
+        return decryptFileToData(filename, pdata, pdata_size);
     }
 
     gcry_free(IV);
     gcry_cipher_reset(HD);
 
-    extra_data = ((char *)*pdata)[data_size - 1];
-    *pdata_size = data_size - (size_t)extra_data;
+    extra_data = ((char *)tmp_data)[data_size - 1];
+    *pdata_size = data_size - (size_t)extra_data - blklen;
+
+    *pdata = attemptSecureAlloc(*pdata_size);
+    memcpy(*pdata, tmp_data + blklen, *pdata_size);
+    gcry_free(tmp_data);
 
     return GPG_ERR_NO_ERROR;
 }
